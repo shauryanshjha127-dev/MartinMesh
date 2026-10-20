@@ -2,16 +2,34 @@
   "name": "martin-mesh",
   "version": "1.0.0",
   "description": "Zero Internet 300m Dual-Engine Offline Mesh Messenger",
-  "main": "index.html",
+  "main": "main.js",
+  "author": "Shauryansh",
   "private": true,
   "scripts": {
-    "build": "echo 'Web assets ready'"
+    "start": "electron .",
+    "dist:win": "electron-builder --win portable"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",
     "@capacitor/android": "^6.0.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.0.0"
+    "@capacitor/cli": "^6.0.0",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.martinmesh.app",
+    "productName": "MartinMesh",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable"
+    },
+    "files": [
+      "index.html",
+      "main.js"
+    ]
   }
 }
