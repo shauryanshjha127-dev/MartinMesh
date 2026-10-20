@@ -1,6 +1,5 @@
 {
   "appId": "com.martinmesh.app",
   "appName": "MartinMesh",
-  "webDir": ".",
-  "bundledWebRuntime": false
+  "webDir": "www"
 }
