@@ -3,437 +3,556 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MartinMesh - Ultimate Offline Mesh & Tactical Comms</title>
+  <title>MartinMesh - Offline WhatsApp</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    body { background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .radar-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.05); } }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    body { background-color: #0b141a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .chat-bg {
+      background-color: #0b141a;
+      background-image: radial-gradient(#1f2c34 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #374248; border-radius: 4px; }
+    .bubble-out { background-color: #005c4b; border-radius: 8px 8px 0px 8px; }
+    .bubble-in { background-color: #202c33; border-radius: 8px 8px 8px 0px; }
   </style>
 </head>
-<body class="text-slate-100 flex flex-col h-screen select-none overflow-hidden">
+<body class="text-slate-100 flex h-screen select-none overflow-hidden antialiased">
 
-  <!-- TOP HEADER -->
-  <header class="bg-slate-900/95 border-b border-slate-800 p-3.5 flex items-center justify-between backdrop-blur z-20">
-    <div class="flex items-center gap-3">
-      <!-- Profile Picture / Avatar Trigger -->
-      <div class="relative cursor-pointer" onclick="openProfileModal()">
-        <img id="headerAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh" class="w-10 h-10 rounded-full border-2 border-emerald-500 object-cover bg-slate-800" />
-        <span class="w-3 h-3 bg-emerald-500 rounded-full block absolute bottom-0 right-0 border-2 border-slate-900 radar-pulse"></span>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-sm font-black tracking-wider text-emerald-400">MARTIN<span class="text-white">MESH</span></h1>
-          <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded font-mono">OFFLINE</span>
+  <!-- LEFT SIDEBAR: CHAT LIST -->
+  <aside id="sidebarPanel" class="w-full md:w-[380px] lg:w-[420px] bg-[#111b21] border-r border-[#222e35] flex flex-col h-full z-20 shrink-0">
+    <!-- Header -->
+    <div class="h-16 bg-[#202c33] px-4 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="relative cursor-pointer" onclick="openProfileModal()">
+          <img id="myAvatarImg" src="https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh" class="w-10 h-10 rounded-full bg-[#111b21] object-cover border border-[#00a884]" />
+          <span class="w-2.5 h-2.5 bg-[#00a884] rounded-full absolute bottom-0 right-0 border-2 border-[#202c33]"></span>
         </div>
-        <p class="text-[11px] text-slate-300 font-semibold cursor-pointer flex items-center gap-1" onclick="openProfileModal()">
-          <span id="headerUserName">Set Call-Sign</span>
-          <i class="fa-solid fa-pen text-[9px] text-slate-500"></i>
-        </p>
+        <div>
+          <h1 class="text-sm font-bold text-[#e9edef] flex items-center gap-1.5">
+            MartinMesh
+            <span id="connBadge" class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1 py-0.2 rounded font-mono">STANDALONE</span>
+          </h1>
+          <p id="myCallSignLabel" class="text-[11px] text-[#8696a0] truncate max-w-[140px] cursor-pointer" onclick="openProfileModal()">User</p>
+        </div>
       </div>
-    </div>
-
-    <!-- Actions (Call / Video / Settings) -->
-    <div class="flex items-center gap-1.5">
-      <button onclick="startDirectCall('voice')" title="Direct Voice Call (Wi-Fi P2P)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 flex items-center justify-center border border-slate-700">
-        <i class="fa-solid fa-phone text-xs"></i>
-      </button>
-      <button onclick="startDirectCall('video')" title="Direct Video Call (Wi-Fi P2P)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 flex items-center justify-center border border-slate-700">
-        <i class="fa-solid fa-video text-xs"></i>
-      </button>
-      <button onclick="openProfileModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center border border-slate-700">
-        <i class="fa-solid fa-gear text-xs"></i>
-      </button>
-    </div>
-  </header>
-
-  <!-- CHANNEL & GROUP SELECTOR -->
-  <div class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex items-center gap-2 overflow-x-auto text-xs font-mono">
-    <span class="text-[10px] text-slate-500 uppercase tracking-wider font-sans font-bold mr-1">GROUPS:</span>
-    <button onclick="switchChannel('GLOBAL')" id="tab-GLOBAL" class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] whitespace-nowrap">
-      # 300m-Broadcast
-    </button>
-    <button onclick="switchChannel('ALPHA')" id="tab-ALPHA" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700 text-[11px] whitespace-nowrap">
-      # Team-Alpha
-    </button>
-    <button onclick="switchChannel('BRAVO')" id="tab-BRAVO" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700 text-[11px] whitespace-nowrap">
-      # Squad-Bravo
-    </button>
-  </div>
-
-  <!-- RADAR / ENGINE METRICS HUD -->
-  <div class="bg-slate-950/70 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between text-[11px] font-mono text-slate-400">
-    <div class="flex items-center gap-3">
-      <span><i class="fa-solid fa-arrows-split-up-and-left text-amber-400 mr-1"></i>Hops: <b class="text-white" id="statHops">4 Max</b></span>
-      <span><i class="fa-solid fa-tower-broadcast text-cyan-400 mr-1"></i>Radio: <b class="text-white">Dual P2P+BLE</b></span>
-    </div>
-    <span class="text-emerald-400"><i class="fa-solid fa-bolt mr-1"></i>Zero Server</span>
-  </div>
-
-  <!-- LIVE CALL MODAL (DIRECT P2P AUDIO / VIDEO) -->
-  <div id="callOverlay" class="fixed inset-0 bg-slate-950/95 z-50 flex flex-col p-4 hidden">
-    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span>
-        <h2 id="callTitle" class="text-sm font-bold uppercase text-white font-mono">Tactical P2P Call</h2>
-      </div>
-      <button onclick="endCall()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold">
-        END CALL
-      </button>
-    </div>
-    <div class="flex-1 flex flex-col items-center justify-center gap-4 relative mt-4">
-      <video id="localVideo" autoplay muted playsinline class="w-full max-w-md h-64 bg-slate-900 rounded-2xl border border-slate-800 object-cover"></video>
-      <div id="callStatusBadge" class="bg-slate-900/80 border border-slate-700 px-4 py-2 rounded-xl text-xs font-mono text-slate-300">
-        Streaming over local direct Wi-Fi P2P radio...
-      </div>
-    </div>
-  </div>
-
-  <!-- CHAT MESSAGES LOG -->
-  <main id="chatLog" class="flex-1 overflow-y-auto p-4 space-y-3">
-    <div class="text-center my-3">
-      <div class="inline-block bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-[11px] text-slate-400 font-mono">
-        <i class="fa-solid fa-satellite-dish text-emerald-400 mr-1.5"></i>
-        Direct jump relay active. Messages jump up to 4 devices (300m range).
-      </div>
-    </div>
-  </main>
-
-  <!-- BOTTOM INPUT BAR (TEXT + VOICE NOTE ENGINE) -->
-  <footer class="p-3 bg-slate-900 border-t border-slate-800 z-10">
-    <div class="flex items-center gap-2 max-w-2xl mx-auto">
       
-      <!-- Push-to-Talk (PTT Voice Note) Button -->
-      <button 
-        id="pttBtn"
-        onmousedown="startVoiceRecording()" 
-        onmouseup="stopVoiceRecording()"
-        ontouchstart="startVoiceRecording()" 
-        ontouchend="stopVoiceRecording()"
-        title="Hold to Record Voice Note"
-        class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 flex items-center justify-center border border-slate-700 active:bg-amber-500 active:text-slate-950 transition"
-      >
-        <i class="fa-solid fa-microphone text-sm" id="pttIcon"></i>
+      <div class="flex items-center gap-1 text-[#aebac1]">
+        <button onclick="promptConnectRelay()" title="Connect Node IP" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition text-[#00a884]">
+          <i class="fa-solid fa-wifi text-sm"></i>
+        </button>
+        <button onclick="openNewChatModal()" title="New Chat / Node" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
+          <i class="fa-solid fa-message text-sm"></i>
+        </button>
+        <button onclick="openProfileModal()" title="Settings" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
+          <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar & Filters -->
+    <div class="p-2 border-b border-[#222e35] bg-[#111b21] space-y-2 shrink-0">
+      <div class="bg-[#202c33] rounded-lg flex items-center px-3 py-1.5 gap-3">
+        <i class="fa-solid fa-magnifying-glass text-[#8696a0] text-xs"></i>
+        <input id="chatSearchInput" oninput="filterChatList()" type="text" placeholder="Search or start new chat" class="bg-transparent text-xs text-[#e9edef] placeholder-[#8696a0] focus:outline-none w-full" />
+      </div>
+      <div class="flex items-center gap-1.5 px-1 overflow-x-auto">
+        <button onclick="setFilter('all')" class="filter-chip text-[11px] px-3 py-1 rounded-full bg-[#00a884]/20 text-[#00a884] font-medium border border-[#00a884]/40 whitespace-nowrap">All</button>
+        <button onclick="setFilter('groups')" class="filter-chip text-[11px] px-3 py-1 rounded-full bg-[#202c33] text-[#8696a0] font-medium whitespace-nowrap">Groups</button>
+        <button onclick="setFilter('direct')" class="filter-chip text-[11px] px-3 py-1 rounded-full bg-[#202c33] text-[#8696a0] font-medium whitespace-nowrap">Direct Nodes</button>
+      </div>
+    </div>
+
+    <!-- Conversations List -->
+    <div id="chatsContainer" class="flex-1 overflow-y-auto divide-y divide-[#222e35]/40"></div>
+  </aside>
+
+  <!-- RIGHT CHAT PANEL (MAIN CONVERSATION) -->
+  <main id="conversationPanel" class="hidden md:flex flex-1 flex-col h-full bg-[#0b141a] relative z-10">
+    <!-- Active Header -->
+    <div class="h-16 bg-[#202c33] px-4 flex items-center justify-between border-l border-[#222e35] shrink-0">
+      <div class="flex items-center gap-3">
+        <button onclick="backToSidebar()" class="md:hidden text-[#aebac1] hover:text-white mr-1">
+          <i class="fa-solid fa-arrow-left text-base"></i>
+        </button>
+        <div class="relative">
+          <img id="activeChatAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Global" class="w-10 h-10 rounded-full bg-[#111b21] object-cover" />
+          <span class="w-2.5 h-2.5 bg-[#00a884] rounded-full absolute bottom-0 right-0 border-2 border-[#202c33]"></span>
+        </div>
+        <div>
+          <h2 id="activeChatTitle" class="text-sm font-semibold text-[#e9edef] leading-tight">#Global-Mesh</h2>
+          <p id="activeChatSubtitle" class="text-[11px] text-[#8696a0]">Zero-Internet 300m Broadcast</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 text-[#aebac1]">
+        <button onclick="initiateCall('video')" title="Direct Video Call" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
+          <i class="fa-solid fa-video text-sm"></i>
+        </button>
+        <button onclick="initiateCall('audio')" title="Direct Audio Call" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
+          <i class="fa-solid fa-phone text-sm"></i>
+        </button>
+        <button onclick="clearCurrentChat()" title="Clear Chat" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
+          <i class="fa-solid fa-trash-can text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Message Bubbles Container -->
+    <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2 chat-bg"></div>
+
+    <!-- Bottom Input Toolbar -->
+    <footer class="bg-[#202c33] px-3 py-2 flex items-center gap-2 shrink-0 border-t border-[#222e35]">
+      <button onclick="sendQuickTacticalPing()" title="Tactical Ping" class="text-[#8696a0] hover:text-[#e9edef] p-2 transition">
+        <i class="fa-solid fa-bolt text-lg"></i>
       </button>
 
-      <!-- Input Field -->
-      <form id="sendForm" class="flex-1 flex items-center gap-2">
+      <form id="msgForm" class="flex-1 flex items-center gap-2" onsubmit="handleSendText(event)">
         <input 
+          id="textInput" 
           type="text" 
-          id="msgInput" 
-          placeholder="Message #300m-Broadcast..." 
+          placeholder="Type a message" 
           autocomplete="off"
-          class="flex-1 bg-slate-800/90 text-white placeholder-slate-500 text-sm px-4 py-2.5 rounded-xl border border-slate-700/80 focus:outline-none focus:border-emerald-500 transition"
+          oninput="toggleSendButton(this.value)"
+          class="flex-1 bg-[#2a3942] text-[#e9edef] placeholder-[#8696a0] text-sm px-4 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00a884]"
         />
+
         <button 
-          type="submit" 
-          class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center active:scale-95"
+          id="pttRecordBtn"
+          type="button"
+          onmousedown="startVoiceNote()"
+          onmouseup="stopVoiceNote()"
+          ontouchstart="startVoiceNote()"
+          ontouchend="stopVoiceNote()"
+          class="w-10 h-10 rounded-full bg-[#00a884] hover:bg-[#029070] text-[#111b21] flex items-center justify-center transition active:scale-95 shrink-0"
         >
-          <i class="fa-solid fa-paper-plane text-sm"></i>
+          <i id="actionIcon" class="fa-solid fa-microphone text-base"></i>
         </button>
       </form>
-    </div>
-  </footer>
+    </footer>
+  </main>
 
-  <!-- PROFILE & AVATAR MODAL -->
+  <!-- MODAL: PROFILE & CALL-SIGN -->
   <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Tactical Profile Settings</h2>
-        <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    <div class="bg-[#202c33] border border-[#374248] rounded-xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-[#374248] pb-3">
+        <h3 class="text-sm font-bold text-[#e9edef]">Profile Identity</h3>
+        <button onclick="closeProfileModal()" class="text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
-
-      <!-- Avatar Picker -->
-      <div class="flex flex-col items-center gap-2">
-        <img id="modalAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh" class="w-16 h-16 rounded-full border-2 border-emerald-500 object-cover bg-slate-800" />
-        <label class="text-[11px] bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1 rounded-lg cursor-pointer hover:bg-slate-700">
-          <i class="fa-solid fa-camera mr-1 text-emerald-400"></i>Upload Photo
-          <input type="file" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)" />
-        </label>
+      <div class="flex flex-col items-center gap-3">
+        <img id="modalAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh" class="w-20 h-20 rounded-full bg-[#111b21] border-2 border-[#00a884] p-1" />
+        <button onclick="randomizeAvatar()" class="text-xs text-[#00a884] hover:underline">Generate New Avatar</button>
       </div>
-
       <div>
-        <label class="text-[11px] font-mono text-slate-400 uppercase">Your Display Name</label>
-        <input 
-          type="text" 
-          id="nameInput" 
-          placeholder="e.g. Shauryansh, Martin" 
-          maxlength="18"
-          class="w-full mt-1 bg-slate-800 text-white px-3.5 py-2.5 rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-500 text-sm"
-        />
+        <label class="text-[11px] text-[#8696a0] font-medium uppercase">Your Display Name</label>
+        <input id="nameInputField" type="text" placeholder="Enter name" class="w-full mt-1 bg-[#111b21] text-white px-3 py-2 rounded-lg border border-[#374248] text-sm focus:outline-none focus:border-[#00a884]" />
       </div>
+      <button onclick="saveUserProfile()" class="w-full bg-[#00a884] hover:bg-[#029070] text-[#111b21] font-bold py-2 rounded-lg text-sm transition">
+        Save Changes
+      </button>
+    </div>
+  </div>
 
-      <div class="pt-2">
-        <button 
-          onclick="saveUserProfile()" 
-          class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition"
-        >
-          Save Identity
-        </button>
+  <!-- MODAL: CREATE NEW CHAT / PEER -->
+  <div id="newChatModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-[#202c33] border border-[#374248] rounded-xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-[#374248] pb-3">
+        <h3 class="text-sm font-bold text-[#e9edef]">Start New Conversation</h3>
+        <button onclick="closeNewChatModal()" class="text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
+      <div>
+        <label class="text-[11px] text-[#8696a0] font-medium uppercase">Chat / Node Name</label>
+        <input id="newChatTitle" type="text" placeholder="e.g. Device Bravo or Squad X" class="w-full mt-1 bg-[#111b21] text-white px-3 py-2 rounded-lg border border-[#374248] text-sm focus:outline-none focus:border-[#00a884]" />
+      </div>
+      <div>
+        <label class="text-[11px] text-[#8696a0] font-medium uppercase">Type</label>
+        <select id="newChatType" class="w-full mt-1 bg-[#111b21] text-white px-3 py-2 rounded-lg border border-[#374248] text-sm focus:outline-none">
+          <option value="direct">1-to-1 Direct Peer</option>
+          <option value="group">Group Channel</option>
+        </select>
+      </div>
+      <button onclick="createNewConversation()" class="w-full bg-[#00a884] hover:bg-[#029070] text-[#111b21] font-bold py-2 rounded-lg text-sm transition">
+        Create Chat
+      </button>
     </div>
   </div>
 
   <script>
-    // Audio Chime Engine
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq = 600, duration = 0.08) {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
-    }
-
-    // Identity & Profile Logic
-    let myUserName = localStorage.getItem("martinmesh_name") || "";
-    let myAvatar = localStorage.getItem("martinmesh_avatar") || "https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh";
-    let activeChannel = "GLOBAL";
     const myNodeId = "NODE-" + Math.floor(1000 + Math.random() * 9000);
+    let myUserName = localStorage.getItem("mm_username") || "User-" + Math.floor(100 + Math.random() * 900);
+    let myAvatar = localStorage.getItem("mm_avatar") || ("https://api.dicebear.com/7.x/bottts/svg?seed=" + myUserName);
+    let activeChatId = localStorage.getItem("mm_active_chat") || "global-mesh";
+    let activeFilter = "all";
+    let meshSocket = null;
 
-    const headerUserName = document.getElementById("headerUserName");
-    const headerAvatar = document.getElementById("headerAvatar");
-    const modalAvatarPreview = document.getElementById("modalAvatarPreview");
-    const nameInput = document.getElementById("nameInput");
-    const profileModal = document.getElementById("profileModal");
+    let conversations = JSON.parse(localStorage.getItem("mm_conversations")) || [
+      { id: "global-mesh", title: "#Global-Mesh", type: "group", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Global", lastMsg: "Tap Wi-Fi to link devices", time: "Now", unread: 0 },
+      { id: "device-alpha", title: "Device Alpha", type: "direct", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Alpha", lastMsg: "Ready for direct mesh comms", time: "10:15 AM", unread: 0 },
+      { id: "device-bravo", title: "Device Bravo", type: "direct", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Bravo", lastMsg: "Offline link standing by", time: "Yesterday", unread: 0 },
+      { id: "squad-bravo", title: "#Team-Bravo", type: "group", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Squad", lastMsg: "Frequency operational", time: "Sunday", unread: 0 }
+    ];
 
-    function updateProfileUI() {
-      headerUserName.innerText = myUserName || "Set Call-Sign";
-      headerAvatar.src = myAvatar;
-      modalAvatarPreview.src = myAvatar;
-      nameInput.value = myUserName;
-    }
-
-    function openProfileModal() {
-      updateProfileUI();
-      profileModal.classList.remove("hidden");
-    }
-
-    function closeProfileModal() {
-      profileModal.classList.add("hidden");
-    }
-
-    function handleAvatarUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        myAvatar = e.target.result; // Base64 compressed image
-        modalAvatarPreview.src = myAvatar;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function saveUserProfile() {
-      const val = nameInput.value.trim();
-      if (!val) return;
-      myUserName = val;
-      localStorage.setItem("martinmesh_name", myUserName);
-      localStorage.setItem("martinmesh_avatar", myAvatar);
-      updateProfileUI();
-      closeProfileModal();
-    }
-
-    if (!myUserName) {
-      setTimeout(openProfileModal, 300);
-    } else {
-      updateProfileUI();
-    }
-
-    // Channels / Groups Switching
-    function switchChannel(channel) {
-      activeChannel = channel;
-      ['GLOBAL', 'ALPHA', 'BRAVO'].forEach(ch => {
-        const btn = document.getElementById('tab-' + ch);
-        if (ch === channel) {
-          btn.className = "px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] whitespace-nowrap";
-        } else {
-          btn.className = "px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700 text-[11px] whitespace-nowrap";
-        }
-      });
-      document.getElementById("msgInput").placeholder = `Message #${channel}...`;
-    }
-
-    // Deduplication Memory & Log
-    const seenPackets = new Set();
-    const chatLog = document.getElementById("chatLog");
-
-    function renderMessage(sender, text, isSelf = false, hops = 0, avatar = null, type = "text", audioBlobUrl = null, channel = "GLOBAL") {
-      const wrapper = document.createElement("div");
-      wrapper.className = `flex gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-start`;
-
-      const avatarSrc = avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=" + sender;
-      const hopBadge = hops === 0 ? "Direct 0-150m" : `Jumped ${hops} Hop(s) (300m)`;
-
-      let contentHtml = "";
-      if (type === "voice" && audioBlobUrl) {
-        contentHtml = `
-          <div class="flex items-center gap-2 py-1">
-            <button onclick="new Audio('${audioBlobUrl}').play()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-amber-400 hover:scale-105 transition">
-              <i class="fa-solid fa-play text-xs"></i>
-            </button>
-            <span class="text-xs font-mono">Voice Note (Mesh Relay)</span>
-          </div>
-        `;
-      } else {
-        contentHtml = `<span>${text}</span>`;
-      }
-
-      wrapper.innerHTML = `
-        <img src="${avatarSrc}" class="w-8 h-8 rounded-full border border-slate-700 object-cover mt-1" />
-        <div class="flex flex-col ${isSelf ? 'items-end' : 'items-start'} max-w-[80%]">
-          <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mb-1">
-            <span class="font-bold ${isSelf ? 'text-emerald-400' : 'text-cyan-300'}">${sender}</span>
-            <span class="text-[9px] bg-slate-800 border border-slate-700 px-1 rounded">#${channel}</span>
-            <span class="text-[9px] text-amber-400">${hopBadge}</span>
-          </div>
-          <div class="${isSelf ? 'bg-emerald-500 text-slate-950 font-medium' : 'bg-slate-800 text-slate-100 border border-slate-700'} px-3.5 py-2.5 rounded-2xl text-sm break-words shadow-md">
-            ${contentHtml}
-          </div>
-        </div>
-      `;
-
-      chatLog.appendChild(wrapper);
-      chatLog.scrollTop = chatLog.scrollHeight;
-    }
-
-    // Packet Protocol Engine (Jump / Multi-Hop Relaying)
-    function createPacket(content, type = "text") {
-      return {
-        id: "pkt_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
-        srcNodeId: myNodeId,
-        senderName: myUserName || "Anonymous",
-        senderAvatar: myAvatar,
-        channel: activeChannel,
-        hops_remaining: 4, // 4 phones jump limit = 300+ meters
-        hops_taken: 0,
-        type: type,
-        payload: content,
-        timestamp: Date.now()
-      };
-    }
-
-    // Inbound Packet Router
-    window.processIncomingMeshPacket = function(packet) {
-      if (seenPackets.has(packet.id)) return;
-      seenPackets.add(packet.id);
-
-      const isSelf = packet.srcNodeId === myNodeId;
-
-      if (!isSelf) {
-        playBeep(880, 0.1);
-        if (packet.type === "voice") {
-          renderMessage(packet.senderName, "", false, packet.hops_taken, packet.senderAvatar, "voice", packet.payload, packet.channel);
-        } else {
-          renderMessage(packet.senderName, packet.payload, false, packet.hops_taken, packet.senderAvatar, "text", null, packet.channel);
-        }
-      }
-
-      // MULTI-HOP JUMP FORWARDING
-      if (!isSelf && packet.hops_remaining > 0) {
-        packet.hops_remaining -= 1;
-        packet.hops_taken += 1;
-        if (window.AndroidMeshBridge) {
-          window.AndroidMeshBridge.broadcastRawPacket(JSON.stringify(packet));
-        }
-      }
+    let messages = JSON.parse(localStorage.getItem("mm_messages")) || {
+      "global-mesh": [
+        { sender: "System", text: "Welcome to MartinMesh WhatsApp edition. Connect via Hotspot/Wi-Fi to broadcast.", time: "12:00", isSelf: false, type: "text" }
+      ],
+      "device-alpha": [],
+      "device-bravo": [],
+      "squad-bravo": []
     };
 
-    // Send Text Form
-    document.getElementById("sendForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!myUserName) { openProfileModal(); return; }
+    function initApp() {
+      document.getElementById("myCallSignLabel").innerText = myUserName;
+      document.getElementById("nameInputField").value = myUserName;
+      document.getElementById("myAvatarImg").src = myAvatar;
+      document.getElementById("modalAvatarPreview").src = myAvatar;
+      renderChatSidebar();
+      selectChat(activeChatId);
 
-      const input = document.getElementById("msgInput");
-      const text = input.value.trim();
-      if (!text) return;
-
-      playBeep(520, 0.05);
-      const packet = createPacket(text, "text");
-      seenPackets.add(packet.id);
-
-      renderMessage(myUserName + " (You)", text, true, 0, myAvatar, "text", null, activeChannel);
-
-      if (window.AndroidMeshBridge) {
-        window.AndroidMeshBridge.broadcastRawPacket(JSON.stringify(packet));
+      if (window.navigator.userAgent.indexOf("Windows") !== -1 || window.location.protocol === "file:") {
+        setTimeout(() => connectRelay("localhost"), 800);
       }
-      input.value = "";
-    });
+    }
 
-    // Voice Note Engine (Push-To-Talk)
+    function renderChatSidebar() {
+      const container = document.getElementById("chatsContainer");
+      container.innerHTML = "";
+      const searchVal = document.getElementById("chatSearchInput").value.toLowerCase();
+
+      conversations.forEach(c => {
+        if (activeFilter === "groups" && c.type !== "group") return;
+        if (activeFilter === "direct" && c.type !== "direct") return;
+        if (searchVal && !c.title.toLowerCase().includes(searchVal)) return;
+
+        const isCurrent = c.id === activeChatId;
+        const item = document.createElement("div");
+        item.className = `flex items-center px-3.5 py-3 gap-3 cursor-pointer transition select-none ${isCurrent ? 'bg-[#2a3942]' : 'hover:bg-[#202c33]'}`;
+        item.onclick = () => selectChat(c.id);
+
+        item.innerHTML = `
+          <div class="relative shrink-0">
+            <img src="${c.avatar}" class="w-12 h-12 rounded-full bg-[#111b21] object-cover" />
+            ${c.type === 'direct' ? '<span class="w-2.5 h-2.5 bg-[#00a884] rounded-full absolute bottom-0 right-0 border-2 border-[#111b21]"></span>' : ''}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <h4 class="text-sm font-medium text-[#e9edef] truncate">${c.title}</h4>
+              <span class="text-[10px] text-[#8696a0]">${c.time || ''}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <p class="text-xs text-[#8696a0] truncate pr-2">${c.lastMsg || 'No messages'}</p>
+              ${c.unread > 0 ? `<span class="bg-[#00a884] text-[#111b21] text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">${c.unread}</span>` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function selectChat(id) {
+      activeChatId = id;
+      localStorage.setItem("mm_active_chat", id);
+      const target = conversations.find(c => c.id === id) || conversations[0];
+      target.unread = 0;
+      saveConversations();
+
+      document.getElementById("activeChatTitle").innerText = target.title;
+      document.getElementById("activeChatSubtitle").innerText = target.type === 'group' ? 'Group Frequency • Offline' : 'Direct Peer Node • Ready';
+      document.getElementById("activeChatAvatar").src = target.avatar;
+
+      document.getElementById("sidebarPanel").classList.add("hidden", "md:flex");
+      document.getElementById("conversationPanel").classList.remove("hidden");
+      document.getElementById("conversationPanel").classList.add("flex");
+
+      renderChatSidebar();
+      renderMessages();
+    }
+
+    function backToSidebar() {
+      document.getElementById("sidebarPanel").classList.remove("hidden");
+      document.getElementById("conversationPanel").classList.add("hidden");
+    }
+
+    function renderMessages() {
+      const box = document.getElementById("messagesContainer");
+      box.innerHTML = "";
+      const currentList = messages[activeChatId] || [];
+
+      currentList.forEach(m => {
+        const row = document.createElement("div");
+        row.className = `flex ${m.isSelf ? 'justify-end' : 'justify-start'}`;
+
+        let content = `<span class="leading-relaxed">${m.text}</span>`;
+        if (m.type === "voice") {
+          content = `
+            <div class="flex items-center gap-2.5 py-1">
+              <button onclick="new Audio('${m.text}').play()" class="w-8 h-8 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-play text-xs"></i>
+              </button>
+              <div class="flex items-center gap-0.5 h-4">
+                <span class="w-1 h-3 bg-[#8696a0] rounded"></span>
+                <span class="w-1 h-4 bg-[#00a884] rounded"></span>
+                <span class="w-1 h-2 bg-[#8696a0] rounded"></span>
+                <span class="w-1 h-5 bg-[#00a884] rounded"></span>
+                <span class="w-1 h-3 bg-[#8696a0] rounded"></span>
+              </div>
+              <span class="text-[10px] text-[#8696a0] font-mono">PTT Voice</span>
+            </div>`;
+        }
+
+        row.innerHTML = `
+          <div class="${m.isSelf ? 'bubble-out' : 'bubble-in'} px-3 py-1.5 max-w-[85%] md:max-w-[65%] text-xs text-[#e9edef] shadow relative">
+            ${!m.isSelf ? `<div class="text-[10px] font-bold text-[#00a884] mb-0.5">${m.sender}</div>` : ''}
+            <div>${content}</div>
+            <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-[#8696a0]">
+              <span>${m.time}</span>
+              ${m.isSelf ? '<i class="fa-solid fa-check-double text-[#53bdeb] text-[10px]"></i>' : ''}
+            </div>
+          </div>
+        `;
+        box.appendChild(row);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function handleSendText(e) {
+      e.preventDefault();
+      const input = document.getElementById("textInput");
+      const val = input.value.trim();
+      if (!val) return;
+
+      dispatchMeshPacket(val, "text");
+      input.value = "";
+      toggleSendButton("");
+    }
+
+    function dispatchMeshPacket(payload, type = "text") {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const msgObj = {
+        sender: myUserName,
+        text: payload,
+        time: timeStr,
+        isSelf: true,
+        type: type
+      };
+
+      if (!messages[activeChatId]) messages[activeChatId] = [];
+      messages[activeChatId].push(msgObj);
+      saveMessages();
+
+      const target = conversations.find(c => c.id === activeChatId);
+      if (target) {
+        target.lastMsg = type === 'voice' ? '🎙️ Voice note' : payload;
+        target.time = timeStr;
+        saveConversations();
+      }
+
+      renderMessages();
+      renderChatSidebar();
+
+      if (meshSocket && meshSocket.readyState === WebSocket.OPEN) {
+        meshSocket.send(JSON.stringify({
+          chatId: activeChatId,
+          senderName: myUserName,
+          srcNodeId: myNodeId,
+          payload: payload,
+          type: type,
+          timestamp: Date.now()
+        }));
+      }
+    }
+
+    function handleIncomingPacket(data) {
+      try {
+        const pkt = JSON.parse(data);
+        if (pkt.srcNodeId === myNodeId) return;
+
+        const targetChatId = pkt.chatId || "global-mesh";
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const incomingMsg = {
+          sender: pkt.senderName || "Peer",
+          text: pkt.payload,
+          time: timeStr,
+          isSelf: false,
+          type: pkt.type || "text"
+        };
+
+        if (!messages[targetChatId]) messages[targetChatId] = [];
+        messages[targetChatId].push(incomingMsg);
+        saveMessages();
+
+        const conv = conversations.find(c => c.id === targetChatId);
+        if (conv) {
+          conv.lastMsg = pkt.type === 'voice' ? '🎙️ Voice note' : pkt.payload;
+          conv.time = timeStr;
+          if (activeChatId !== targetChatId) conv.unread = (conv.unread || 0) + 1;
+          saveConversations();
+        }
+
+        if (activeChatId === targetChatId) {
+          renderMessages();
+        }
+        renderChatSidebar();
+      } catch (e) {
+        console.error("Packet error", e);
+      }
+    }
+
+    function connectRelay(ip) {
+      if (meshSocket) meshSocket.close();
+      const badge = document.getElementById("connBadge");
+      badge.innerText = "LINKING...";
+      badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-800 px-1 rounded font-mono";
+
+      try {
+        meshSocket = new WebSocket(`ws://${ip}:8080`);
+        meshSocket.onopen = () => {
+          badge.innerText = "LINKED";
+          badge.className = "text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1 rounded font-mono";
+          localStorage.setItem("last_ip", ip);
+        };
+        meshSocket.onmessage = (e) => handleIncomingPacket(e.data);
+        meshSocket.onclose = () => {
+          badge.innerText = "OFFLINE";
+          badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-800 px-1 rounded font-mono";
+        };
+      } catch (err) {
+        badge.innerText = "STANDALONE";
+      }
+    }
+
+    function promptConnectRelay() {
+      const last = localStorage.getItem("last_ip") || "192.168.43.1";
+      const ip = prompt("Enter Relay Node IP Address (e.g. laptop's Wi-Fi IP):", last);
+      if (ip) connectRelay(ip);
+    }
+
     let mediaRecorder = null;
     let audioChunks = [];
-    const pttBtn = document.getElementById("pttBtn");
 
-    async function startVoiceRecording() {
+    async function startVoiceNote() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
           const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64Audio = reader.result;
-            const packet = createPacket(base64Audio, "voice");
-            seenPackets.add(packet.id);
-            renderMessage(myUserName + " (You)", "", true, 0, myAvatar, "voice", base64Audio, activeChannel);
-            if (window.AndroidMeshBridge) {
-              window.AndroidMeshBridge.broadcastRawPacket(JSON.stringify(packet));
-            }
-          };
-          reader.readAsDataURL(audioBlob);
+          reader.readAsDataURL(blob);
+          reader.onloadend = () => dispatchMeshPacket(reader.result, "voice");
         };
         mediaRecorder.start();
-        pttBtn.classList.add("bg-red-500", "text-white");
-      } catch (err) {
-        console.warn("Audio mic permission required for offline voice note.");
+        document.getElementById("actionIcon").className = "fa-solid fa-circle-dot text-red-500 animate-pulse";
+      } catch (e) {
+        alert("Microphone permission required for voice notes.");
       }
     }
 
-    function stopVoiceRecording() {
+    function stopVoiceNote() {
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
-        pttBtn.classList.remove("bg-red-500", "text-white");
+        document.getElementById("actionIcon").className = "fa-solid fa-microphone text-base";
       }
     }
 
-    // Direct P2P Video / Audio Call Engine (Wi-Fi Direct)
-    let localStream = null;
-    const callOverlay = document.getElementById("callOverlay");
-    const localVideo = document.getElementById("localVideo");
-
-    async function startDirectCall(mode = 'video') {
-      try {
-        callOverlay.classList.remove("hidden");
-        document.getElementById("callTitle").innerText = mode === 'video' ? "Wi-Fi Direct Video Stream" : "Wi-Fi Direct Audio Call";
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: mode === 'video',
-          audio: true
-        });
-        localVideo.srcObject = localStream;
-      } catch (e) {
-        alert("Camera/Microphone permission required for direct P2P call.");
-        endCall();
+    function toggleSendButton(val) {
+      const icon = document.getElementById("actionIcon");
+      const btn = document.getElementById("pttRecordBtn");
+      if (val.trim().length > 0) {
+        icon.className = "fa-solid fa-paper-plane text-sm";
+        btn.onclick = () => document.getElementById("msgForm").requestSubmit();
+        btn.onmousedown = null;
+        btn.onmouseup = null;
+      } else {
+        icon.className = "fa-solid fa-microphone text-base";
+        btn.onclick = null;
+        btn.onmousedown = startVoiceNote;
+        btn.onmouseup = stopVoiceNote;
       }
     }
 
-    function endCall() {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-      callOverlay.classList.add("hidden");
+    function sendQuickTacticalPing() {
+      dispatchMeshPacket("⚡ Tactical Ping: Radio check confirmed.", "text");
     }
+
+    function openProfileModal() { document.getElementById("profileModal").classList.remove("hidden"); }
+    function closeProfileModal() { document.getElementById("profileModal").classList.add("hidden"); }
+    function randomizeAvatar() {
+      myAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=" + Math.random();
+      document.getElementById("modalAvatarPreview").src = myAvatar;
+    }
+    function saveUserProfile() {
+      const val = document.getElementById("nameInputField").value.trim();
+      if (val) {
+        myUserName = val;
+        localStorage.setItem("mm_username", myUserName);
+        localStorage.setItem("mm_avatar", myAvatar);
+        document.getElementById("myCallSignLabel").innerText = myUserName;
+        document.getElementById("myAvatarImg").src = myAvatar;
+      }
+      closeProfileModal();
+    }
+
+    function openNewChatModal() { document.getElementById("newChatModal").classList.remove("hidden"); }
+    function closeNewChatModal() { document.getElementById("newChatModal").classList.add("hidden"); }
+    function createNewConversation() {
+      const title = document.getElementById("newChatTitle").value.trim();
+      const type = document.getElementById("newChatType").value;
+      if (!title) return;
+
+      const newId = "chat-" + Date.now();
+      const newConv = {
+        id: newId,
+        title: title,
+        type: type,
+        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${title}`,
+        lastMsg: "New thread started",
+        time: "Now",
+        unread: 0
+      };
+      conversations.unshift(newConv);
+      messages[newId] = [];
+      saveConversations();
+      saveMessages();
+
+      document.getElementById("newChatTitle").value = "";
+      closeNewChatModal();
+      selectChat(newId);
+    }
+
+    function clearCurrentChat() {
+      if (confirm("Clear all messages in this conversation?")) {
+        messages[activeChatId] = [];
+        saveMessages();
+        renderMessages();
+      }
+    }
+
+    function initiateCall(type) {
+      alert(`Starting direct ${type.toUpperCase()} call signal to active peer on offline radio frequency...`);
+    }
+
+    function setFilter(f) {
+      activeFilter = f;
+      document.querySelectorAll(".filter-chip").forEach(el => {
+        el.className = "filter-chip text-[11px] px-3 py-1 rounded-full bg-[#202c33] text-[#8696a0] font-medium whitespace-nowrap";
+      });
+      event.target.className = "filter-chip text-[11px] px-3 py-1 rounded-full bg-[#00a884]/20 text-[#00a884] font-medium border border-[#00a884]/40 whitespace-nowrap";
+      renderChatSidebar();
+    }
+
+    function filterChatList() { renderChatSidebar(); }
+    function saveConversations() { localStorage.setItem("mm_conversations", JSON.stringify(conversations)); }
+    function saveMessages() { localStorage.setItem("mm_messages", JSON.stringify(messages)); }
+
+    window.onload = initApp;
   </script>
 </body>
 </html>
