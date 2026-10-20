@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Zero Internet 300m Dual-Engine Offline Mesh Messenger",
   "main": "main.js",
+  "author": "Shauryansh",
   "private": true,
   "scripts": {
     "build": "mkdir -p www && cp index.html www/",
@@ -11,7 +12,8 @@
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",
-    "@capacitor/android": "^6.0.0"
+    "@capacitor/android": "^6.0.0",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
@@ -21,6 +23,7 @@
   "build": {
     "appId": "com.martinmesh.app",
     "productName": "MartinMesh",
+    "asar": true,
     "directories": {
       "output": "dist"
     },
@@ -29,7 +32,8 @@
     },
     "files": [
       "index.html",
-      "main.js"
+      "main.js",
+      "node_modules/**/*"
     ]
   }
 }
