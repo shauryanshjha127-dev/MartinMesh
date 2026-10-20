@@ -24,15 +24,15 @@ jobs:
         with:
           node-version: 20
 
-      - name: Prepare Web Assets Folder
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Create and Populate www Directory
         run: |
           mkdir -p www
           cp index.html www/
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Initialize Capacitor Android
+      - name: Initialize and Sync Capacitor Android
         run: |
           npx cap add android || true
           npx cap sync android
