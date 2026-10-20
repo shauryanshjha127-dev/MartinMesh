@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Zero Internet 300m Dual-Engine Offline Mesh Messenger",
   "main": "main.js",
-  "author": "Shauryansh",
   "private": true,
   "scripts": {
+    "build": "mkdir -p www && cp index.html www/",
     "start": "electron .",
     "dist:win": "electron-builder --win portable"
   },
