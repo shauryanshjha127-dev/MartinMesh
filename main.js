@@ -1,11 +1,11 @@
 const { app, BrowserWindow } = require('electron');
-const WebSocket = require('ws');
 
 let wss = null;
 const clients = new Set();
 
 function startRelay() {
   try {
+    const WebSocket = require('ws');
     wss = new WebSocket.Server({ port: 8080 }, () => {
       console.log('MartinMesh Relay listening on port 8080');
     });
@@ -14,7 +14,6 @@ function startRelay() {
       clients.add(ws);
 
       ws.on('message', (message) => {
-        // Forward message to all other connected devices
         for (const client of clients) {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
             client.send(message.toString());
@@ -26,7 +25,7 @@ function startRelay() {
       ws.on('error', () => clients.delete(ws));
     });
   } catch (err) {
-    console.error('Error starting relay server:', err);
+    console.error('Relay server startup warning:', err);
   }
 }
 
