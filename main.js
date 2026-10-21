@@ -3,7 +3,7 @@ const { app, BrowserWindow } = require('electron');
 let wss = null;
 const clients = new Set();
 
-function startRelay() {
+function startRelayServer() {
   try {
     const WebSocket = require('ws');
     wss = new WebSocket.Server({ port: 8080 }, () => {
@@ -30,11 +30,13 @@ function startRelay() {
 }
 
 function createWindow() {
-  startRelay();
+  startRelayServer();
 
   const win = new BrowserWindow({
     width: 1050,
     height: 750,
+    minWidth: 800,
+    minHeight: 600,
     backgroundColor: '#0b141a',
     autoHideMenuBar: true,
     webPreferences: {
