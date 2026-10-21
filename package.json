@@ -1,7 +1,7 @@
 {
   "name": "martin-mesh",
   "version": "1.0.0",
-  "description": "Zero Internet 300m Dual-Engine Offline Mesh Messenger",
+  "description": "Zero Internet Dual-Engine Offline Mesh Messenger",
   "main": "main.js",
   "author": "Shauryansh",
   "private": true,
