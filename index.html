@@ -2,248 +2,272 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MartinMesh - Offline WhatsApp</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>MartinMesh Offline WhatsApp</title>
   <style>
-    body { background-color: #0b141a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    .chat-bg {
-      background-color: #0b141a;
-      background-image: radial-gradient(#1f2c34 1px, transparent 1px);
-      background-size: 20px 20px;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg-dark: #0b141a;
+      --panel-dark: #111b21;
+      --header-dark: #202c33;
+      --search-dark: #202c33;
+      --input-dark: #2a3942;
+      --bubble-out: #005c4b;
+      --bubble-in: #202c33;
+      --teal-accent: #00a884;
+      --teal-dim: rgba(0, 168, 132, 0.2);
+      --text-white: #e9edef;
+      --text-muted: #8696a0;
+      --border-color: #222e35;
+      --blue-tick: #53bdeb;
     }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background: #374248; border-radius: 4px; }
-    .bubble-out { background-color: #005c4b; border-radius: 8px 8px 0px 8px; }
-    .bubble-in { background-color: #202c33; border-radius: 8px 8px 8px 0px; }
+    body, html { width: 100%; height: 100%; background: var(--bg-dark); color: var(--text-white); overflow: hidden; }
+    .app-root { display: flex; width: 100vw; height: 100vh; position: relative; }
+
+    /* SVGs and Icons */
+    .icon { width: 20px; height: 20px; fill: currentColor; display: inline-block; vertical-align: middle; }
+    .icon-sm { width: 16px; height: 16px; fill: currentColor; }
+
+    /* SIDEBAR */
+    .sidebar { width: 100%; max-width: 420px; background: var(--panel-dark); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; height: 100%; z-index: 20; shrink: 0; }
+    @media (min-width: 768px) { .sidebar { width: 400px; } }
+
+    .header-bar { height: 60px; background: var(--header-dark); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); }
+    .user-profile-badge { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; text-transform: uppercase; color: #fff; background: #374248; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+    .status-dot { width: 9px; height: 9px; background: var(--teal-accent); border-radius: 50%; border: 2px solid var(--header-dark); position: absolute; bottom: 0; right: 0; }
+
+    .actions-row { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
+    .btn-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: inherit; cursor: pointer; transition: 0.15s; }
+    .btn-icon:active { background: rgba(255,255,255,0.08); }
+
+    .search-section { padding: 8px 12px; background: var(--panel-dark); border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+    .search-bar { background: var(--search-dark); border-radius: 8px; display: flex; align-items: center; padding: 6px 12px; gap: 8px; color: var(--text-muted); }
+    .search-bar input { background: transparent; border: none; outline: none; color: var(--text-white); font-size: 13px; width: 100%; }
+
+    .chips-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .chip { font-size: 12px; padding: 4px 12px; border-radius: 16px; background: var(--header-dark); color: var(--text-muted); border: 1px solid transparent; cursor: pointer; white-space: nowrap; }
+    .chip.active { background: var(--teal-dim); color: var(--teal-accent); border-color: rgba(0, 168, 132, 0.4); font-weight: 600; }
+
+    .chat-list { flex: 1; overflow-y: auto; }
+    .chat-item { display: flex; align-items: center; padding: 12px 16px; gap: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .chat-item:active, .chat-item.active { background: var(--header-dark); }
+    .chat-info { flex: 1; min-width: 0; }
+    .chat-row-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+    .chat-title { font-size: 14px; font-weight: 500; color: var(--text-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-time { font-size: 11px; color: var(--text-muted); }
+    .chat-row-btm { display: flex; justify-content: space-between; align-items: center; }
+    .chat-preview { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge-unread { background: var(--teal-accent); color: #0b141a; font-size: 10px; font-weight: bold; border-radius: 10px; padding: 2px 6px; }
+
+    /* CONVERSATION PANE */
+    .conversation-panel { flex: 1; display: flex; flex-direction: column; height: 100%; background: var(--bg-dark); position: relative; }
+    .messages-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 6px; background-color: #0b141a; background-image: radial-gradient(#1c272e 1px, transparent 1px); background-size: 20px 20px; }
+
+    .msg-wrapper { display: flex; width: 100%; margin-bottom: 2px; }
+    .msg-wrapper.self { justify-content: flex-end; }
+    .msg-wrapper.peer { justify-content: flex-start; }
+
+    .bubble { max-width: 80%; padding: 6px 9px 5px 9px; border-radius: 8px; font-size: 13.5px; line-height: 19px; word-break: break-word; box-shadow: 0 1px 0.5px rgba(0,0,0,0.2); }
+    .bubble.self { background: var(--bubble-out); border-top-right-radius: 0px; }
+    .bubble.peer { background: var(--bubble-in); border-top-left-radius: 0px; }
+    .bubble-sender { font-size: 11px; font-weight: 700; color: var(--teal-accent); margin-bottom: 2px; }
+    .bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; color: var(--text-muted); margin-top: 2px; float: right; margin-left: 12px; }
+
+    /* FOOTER TOOLBAR */
+    .input-bar { height: 60px; background: var(--header-dark); padding: 6px 12px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); }
+    .msg-field { flex: 1; background: var(--input-dark); border: none; outline: none; border-radius: 8px; height: 42px; padding: 0 14px; font-size: 14px; color: var(--text-white); }
+    .btn-circle { width: 42px; height: 42px; border-radius: 50%; background: var(--teal-accent); border: none; display: flex; align-items: center; justify-content: center; color: #0b141a; cursor: pointer; flex-shrink: 0; }
+    .btn-circle:active { transform: scale(0.95); }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-card { width: 100%; max-width: 360px; background: var(--header-dark); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); }
+    .modal-card input, .modal-card select { width: 100%; background: var(--panel-dark); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 6px; margin: 10px 0 16px 0; outline: none; font-size: 14px; }
+    .modal-card button.save-btn { width: 100%; background: var(--teal-accent); color: #0b141a; font-weight: bold; border: none; padding: 12px; border-radius: 6px; cursor: pointer; }
+
+    .hidden { display: none !important; }
+    @media (max-width: 767px) {
+      .mobile-hide { display: none !important; }
+    }
   </style>
 </head>
-<body class="text-slate-100 flex h-screen select-none overflow-hidden antialiased">
+<body>
 
-  <!-- LEFT SIDEBAR: CHAT LIST -->
-  <aside id="sidebarPanel" class="w-full md:w-[380px] lg:w-[420px] bg-[#111b21] border-r border-[#222e35] flex flex-col h-full z-20 shrink-0">
-    <!-- Header -->
-    <div class="h-16 bg-[#202c33] px-4 flex items-center justify-between shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="relative cursor-pointer" onclick="openProfileModal()">
-          <img id="myAvatarImg" src="https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh" class="w-10 h-10 rounded-full bg-[#111b21] object-cover border border-[#00a884]" />
-          <span class="w-2.5 h-2.5 bg-[#00a884] rounded-full absolute bottom-0 right-0 border-2 border-[#202c33]"></span>
+  <div class="app-root">
+    
+    <!-- SIDEBAR -->
+    <aside id="sidebarPane" class="sidebar">
+      <div class="header-bar">
+        <div class="user-profile-badge" onclick="openProfile()">
+          <div style="position:relative;">
+            <div id="selfAvatar" class="avatar">U</div>
+            <span class="status-dot"></span>
+          </div>
+          <div>
+            <div style="font-size:14px; font-weight:bold; color:var(--text-white); display:flex; align-items:center; gap:6px;">
+              MartinMesh
+              <span id="connTag" style="font-size:9px; font-weight:normal; background:#1b382b; color:var(--teal-accent); padding:1px 5px; border-radius:4px; font-family:monospace;">STANDALONE</span>
+            </div>
+            <div id="selfName" style="font-size:11px; color:var(--text-muted);">Set Profile</div>
+          </div>
         </div>
-        <div>
-          <h1 class="text-sm font-bold text-[#e9edef] flex items-center gap-1.5">
-            MartinMesh
-            <span id="connBadge" class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1 py-0.2 rounded font-mono">STANDALONE</span>
-          </h1>
-          <p id="myCallSignLabel" class="text-[11px] text-[#8696a0] truncate max-w-[140px] cursor-pointer" onclick="openProfileModal()">User</p>
-        </div>
-      </div>
-      
-      <div class="flex items-center gap-1 text-[#aebac1]">
-        <button onclick="promptConnectRelay()" title="Connect Node IP" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition text-[#00a884]">
-          <i class="fa-solid fa-wifi text-sm"></i>
-        </button>
-        <button onclick="openNewChatModal()" title="New Chat / Node" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
-          <i class="fa-solid fa-message text-sm"></i>
-        </button>
-        <button onclick="openProfileModal()" title="Settings" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
-          <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
-        </button>
-      </div>
-    </div>
 
-    <!-- Search Bar & Filters -->
-    <div class="p-2 border-b border-[#222e35] bg-[#111b21] space-y-2 shrink-0">
-      <div class="bg-[#202c33] rounded-lg flex items-center px-3 py-1.5 gap-3">
-        <i class="fa-solid fa-magnifying-glass text-[#8696a0] text-xs"></i>
-        <input id="chatSearchInput" oninput="filterChatList()" type="text" placeholder="Search or start new chat" class="bg-transparent text-xs text-[#e9edef] placeholder-[#8696a0] focus:outline-none w-full" />
-      </div>
-      <div class="flex items-center gap-1.5 px-1 overflow-x-auto">
-        <button onclick="setFilter('all')" class="filter-chip text-[11px] px-3 py-1 rounded-full bg-[#00a884]/20 text-[#00a884] font-medium border border-[#00a884]/40 whitespace-nowrap">All</button>
-        <button onclick="setFilter('groups')" class="filter-chip text-[11px] px-3 py-1 rounded-full bg-[#202c33] text-[#8696a0] font-medium whitespace-nowrap">Groups</button>
-        <button onclick="setFilter('direct')" class="filter-chip text-[11px] px-3 py-1 rounded-full bg-[#202c33] text-[#8696a0] font-medium whitespace-nowrap">Direct Nodes</button>
-      </div>
-    </div>
-
-    <!-- Conversations List -->
-    <div id="chatsContainer" class="flex-1 overflow-y-auto divide-y divide-[#222e35]/40"></div>
-  </aside>
-
-  <!-- RIGHT CHAT PANEL (MAIN CONVERSATION) -->
-  <main id="conversationPanel" class="hidden md:flex flex-1 flex-col h-full bg-[#0b141a] relative z-10">
-    <!-- Active Header -->
-    <div class="h-16 bg-[#202c33] px-4 flex items-center justify-between border-l border-[#222e35] shrink-0">
-      <div class="flex items-center gap-3">
-        <button onclick="backToSidebar()" class="md:hidden text-[#aebac1] hover:text-white mr-1">
-          <i class="fa-solid fa-arrow-left text-base"></i>
-        </button>
-        <div class="relative">
-          <img id="activeChatAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Global" class="w-10 h-10 rounded-full bg-[#111b21] object-cover" />
-          <span class="w-2.5 h-2.5 bg-[#00a884] rounded-full absolute bottom-0 right-0 border-2 border-[#202c33]"></span>
-        </div>
-        <div>
-          <h2 id="activeChatTitle" class="text-sm font-semibold text-[#e9edef] leading-tight">#Global-Mesh</h2>
-          <p id="activeChatSubtitle" class="text-[11px] text-[#8696a0]">Zero-Internet 300m Broadcast</p>
+        <div class="actions-row">
+          <button class="btn-icon" onclick="promptRelayIP()" title="Connect IP">
+            <!-- Wi-Fi SVG -->
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0 0 12 4zm0 4c3.34 0 6.39 1.25 8.7 3.32L12 19.97 3.3 11.32A12.82 12.82 0 0 1 12 8z"/></svg>
+          </button>
+          <button class="btn-icon" onclick="openNewChat()" title="New Chat">
+            <!-- Message Add SVG -->
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 9h-4v4h-2v-4H7V9h4V5h2v4h4v2z"/></svg>
+          </button>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 text-[#aebac1]">
-        <button onclick="initiateCall('video')" title="Direct Video Call" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
-          <i class="fa-solid fa-video text-sm"></i>
-        </button>
-        <button onclick="initiateCall('audio')" title="Direct Audio Call" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
-          <i class="fa-solid fa-phone text-sm"></i>
-        </button>
-        <button onclick="clearCurrentChat()" title="Clear Chat" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center transition">
-          <i class="fa-solid fa-trash-can text-sm"></i>
-        </button>
+      <div class="search-section">
+        <div class="search-bar">
+          <svg class="icon-sm" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" id="searchInput" placeholder="Search or start new chat" oninput="renderChats()" />
+        </div>
+        <div class="chips-row">
+          <button class="chip active" onclick="setFilter('all', this)">All</button>
+          <button class="chip" onclick="setFilter('groups', this)">Groups</button>
+          <button class="chip" onclick="setFilter('direct', this)">Direct Nodes</button>
+        </div>
       </div>
-    </div>
 
-    <!-- Message Bubbles Container -->
-    <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2 chat-bg"></div>
+      <div id="chatsContainer" class="chat-list"></div>
+    </aside>
 
-    <!-- Bottom Input Toolbar -->
-    <footer class="bg-[#202c33] px-3 py-2 flex items-center gap-2 shrink-0 border-t border-[#222e35]">
-      <button onclick="sendQuickTacticalPing()" title="Tactical Ping" class="text-[#8696a0] hover:text-[#e9edef] p-2 transition">
-        <i class="fa-solid fa-bolt text-lg"></i>
-      </button>
+    <!-- MAIN CHAT PANEL -->
+    <main id="chatPane" class="conversation-panel mobile-hide">
+      <!-- Conversation Header -->
+      <div class="header-bar" style="border-left: 1px solid var(--border-color);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-icon" style="margin-left:-8px;" onclick="goBackToSidebar()">
+            <!-- Left Arrow SVG -->
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+          <div id="activeAvatar" class="avatar" style="background:#264653;">G</div>
+          <div>
+            <div id="activeTitle" style="font-size:14px; font-weight:600; color:var(--text-white);">#Global-Mesh</div>
+            <div id="activeSubtitle" style="font-size:11px; color:var(--teal-accent);">Direct Mesh Frequency</div>
+          </div>
+        </div>
 
-      <form id="msgForm" class="flex-1 flex items-center gap-2" onsubmit="handleSendText(event)">
-        <input 
-          id="textInput" 
-          type="text" 
-          placeholder="Type a message" 
-          autocomplete="off"
-          oninput="toggleSendButton(this.value)"
-          class="flex-1 bg-[#2a3942] text-[#e9edef] placeholder-[#8696a0] text-sm px-4 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00a884]"
-        />
+        <div class="actions-row">
+          <button class="btn-icon" onclick="triggerCall('Video')" title="Video Call">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          </button>
+          <button class="btn-icon" onclick="triggerCall('Voice')" title="Audio Call">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.51c.24-.24.32-.59.24-.92C9.12 6.66 8.93 5.47 8.93 4.24 8.93 3.56 8.37 3 7.69 3H4.27C3.59 3 3 3.56 3 4.24c0 9.39 7.61 17 17 17 .68 0 1.25-.57 1.25-1.25v-3.41c0-.68-.57-1.2-1.24-1.2z"/></svg>
+          </button>
+        </div>
+      </div>
 
-        <button 
-          id="pttRecordBtn"
-          type="button"
-          onmousedown="startVoiceNote()"
-          onmouseup="stopVoiceNote()"
-          ontouchstart="startVoiceNote()"
-          ontouchend="stopVoiceNote()"
-          class="w-10 h-10 rounded-full bg-[#00a884] hover:bg-[#029070] text-[#111b21] flex items-center justify-center transition active:scale-95 shrink-0"
-        >
-          <i id="actionIcon" class="fa-solid fa-microphone text-base"></i>
+      <!-- Messages View -->
+      <div id="messagesContainer" class="messages-area"></div>
+
+      <!-- Input Bar -->
+      <footer class="input-bar">
+        <input type="text" id="textInput" class="msg-field" placeholder="Type a message" autocomplete="off" oninput="handleTyping(this.value)" onkeydown="if(event.key==='Enter') sendCurrentMessage()" />
+        
+        <button id="actionBtn" class="btn-circle" onmousedown="startPTT()" onmouseup="stopPTT()" ontouchstart="startPTT()" ontouchend="stopPTT()">
+          <!-- Default Mic SVG -->
+          <svg id="actionIcon" class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
         </button>
-      </form>
-    </footer>
-  </main>
+      </footer>
+    </main>
 
-  <!-- MODAL: PROFILE & CALL-SIGN -->
-  <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-[#202c33] border border-[#374248] rounded-xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-[#374248] pb-3">
-        <h3 class="text-sm font-bold text-[#e9edef]">Profile Identity</h3>
-        <button onclick="closeProfileModal()" class="text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="flex flex-col items-center gap-3">
-        <img id="modalAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=MartinMesh" class="w-20 h-20 rounded-full bg-[#111b21] border-2 border-[#00a884] p-1" />
-        <button onclick="randomizeAvatar()" class="text-xs text-[#00a884] hover:underline">Generate New Avatar</button>
-      </div>
-      <div>
-        <label class="text-[11px] text-[#8696a0] font-medium uppercase">Your Display Name</label>
-        <input id="nameInputField" type="text" placeholder="Enter name" class="w-full mt-1 bg-[#111b21] text-white px-3 py-2 rounded-lg border border-[#374248] text-sm focus:outline-none focus:border-[#00a884]" />
-      </div>
-      <button onclick="saveUserProfile()" class="w-full bg-[#00a884] hover:bg-[#029070] text-[#111b21] font-bold py-2 rounded-lg text-sm transition">
-        Save Changes
-      </button>
+  </div>
+
+  <!-- MODALS -->
+  <div id="profileModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 style="margin-bottom:12px; font-size:16px;">Tactical Call-Sign</h3>
+      <input type="text" id="profileNameInput" placeholder="Enter your identity name..." />
+      <button class="save-btn" onclick="saveProfile()">Save Identity</button>
     </div>
   </div>
 
-  <!-- MODAL: CREATE NEW CHAT / PEER -->
-  <div id="newChatModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-[#202c33] border border-[#374248] rounded-xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-[#374248] pb-3">
-        <h3 class="text-sm font-bold text-[#e9edef]">Start New Conversation</h3>
-        <button onclick="closeNewChatModal()" class="text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div>
-        <label class="text-[11px] text-[#8696a0] font-medium uppercase">Chat / Node Name</label>
-        <input id="newChatTitle" type="text" placeholder="e.g. Device Bravo or Squad X" class="w-full mt-1 bg-[#111b21] text-white px-3 py-2 rounded-lg border border-[#374248] text-sm focus:outline-none focus:border-[#00a884]" />
-      </div>
-      <div>
-        <label class="text-[11px] text-[#8696a0] font-medium uppercase">Type</label>
-        <select id="newChatType" class="w-full mt-1 bg-[#111b21] text-white px-3 py-2 rounded-lg border border-[#374248] text-sm focus:outline-none">
-          <option value="direct">1-to-1 Direct Peer</option>
-          <option value="group">Group Channel</option>
-        </select>
-      </div>
-      <button onclick="createNewConversation()" class="w-full bg-[#00a884] hover:bg-[#029070] text-[#111b21] font-bold py-2 rounded-lg text-sm transition">
-        Create Chat
-      </button>
+  <div id="newChatModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 style="margin-bottom:12px; font-size:16px;">Start Conversation</h3>
+      <input type="text" id="newChatName" placeholder="Node or Group Name..." />
+      <select id="newChatType">
+        <option value="direct">Direct 1-to-1 Node</option>
+        <option value="group">Tactical Group Channel</option>
+      </select>
+      <button class="save-btn" onclick="saveNewChat()">Add Chat</button>
     </div>
   </div>
 
   <script>
-    const myNodeId = "NODE-" + Math.floor(1000 + Math.random() * 9000);
-    let myUserName = localStorage.getItem("mm_username") || "User-" + Math.floor(100 + Math.random() * 900);
-    let myAvatar = localStorage.getItem("mm_avatar") || ("https://api.dicebear.com/7.x/bottts/svg?seed=" + myUserName);
-    let activeChatId = localStorage.getItem("mm_active_chat") || "global-mesh";
+    // --- STATE CONFIG ---
+    let myName = localStorage.getItem("mm_user_name") || "Node-" + Math.floor(100 + Math.random()*900);
+    const myId = "NODE-" + Math.floor(1000 + Math.random()*9000);
+    let activeChatId = "global-mesh";
     let activeFilter = "all";
     let meshSocket = null;
 
-    let conversations = JSON.parse(localStorage.getItem("mm_conversations")) || [
-      { id: "global-mesh", title: "#Global-Mesh", type: "group", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Global", lastMsg: "Tap Wi-Fi to link devices", time: "Now", unread: 0 },
-      { id: "device-alpha", title: "Device Alpha", type: "direct", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Alpha", lastMsg: "Ready for direct mesh comms", time: "10:15 AM", unread: 0 },
-      { id: "device-bravo", title: "Device Bravo", type: "direct", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Bravo", lastMsg: "Offline link standing by", time: "Yesterday", unread: 0 },
-      { id: "squad-bravo", title: "#Team-Bravo", type: "group", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Squad", lastMsg: "Frequency operational", time: "Sunday", unread: 0 }
+    let conversations = JSON.parse(localStorage.getItem("mm_chat_threads")) || [
+      { id: "global-mesh", title: "#Global-Mesh", type: "group", lastMsg: "Zero-Internet Radio Active", time: "Now", unread: 0 },
+      { id: "device-alpha", title: "Device Alpha", type: "direct", lastMsg: "Offline link standing by", time: "11:20", unread: 0 },
+      { id: "device-bravo", title: "Device Bravo", type: "direct", lastMsg: "Node online", time: "Yesterday", unread: 0 }
     ];
 
-    let messages = JSON.parse(localStorage.getItem("mm_messages")) || {
+    let messages = JSON.parse(localStorage.getItem("mm_chat_msgs")) || {
       "global-mesh": [
-        { sender: "System", text: "Welcome to MartinMesh WhatsApp edition. Connect via Hotspot/Wi-Fi to broadcast.", time: "12:00", isSelf: false, type: "text" }
-      ],
-      "device-alpha": [],
-      "device-bravo": [],
-      "squad-bravo": []
+        { sender: "System", text: "MartinMesh authentic offline layout ready. No servers needed.", time: "12:00", isSelf: false, type: "text" }
+      ]
     };
 
-    function initApp() {
-      document.getElementById("myCallSignLabel").innerText = myUserName;
-      document.getElementById("nameInputField").value = myUserName;
-      document.getElementById("myAvatarImg").src = myAvatar;
-      document.getElementById("modalAvatarPreview").src = myAvatar;
-      renderChatSidebar();
+    function getInitials(title) {
+      if(!title) return "N";
+      return title.replace(/#/g, '').trim().substring(0,2).toUpperCase();
+    }
+
+    function init() {
+      document.getElementById("selfName").innerText = myName;
+      document.getElementById("selfAvatar").innerText = getInitials(myName);
+      renderChats();
       selectChat(activeChatId);
 
+      // Desktop auto-relay connect
       if (window.navigator.userAgent.indexOf("Windows") !== -1 || window.location.protocol === "file:") {
-        setTimeout(() => connectRelay("localhost"), 800);
+        setTimeout(() => connectSocket("localhost"), 500);
       }
     }
 
-    function renderChatSidebar() {
+    // --- SIDEBAR RENDERING ---
+    function renderChats() {
       const container = document.getElementById("chatsContainer");
       container.innerHTML = "";
-      const searchVal = document.getElementById("chatSearchInput").value.toLowerCase();
+      const search = document.getElementById("searchInput").value.toLowerCase();
 
       conversations.forEach(c => {
-        if (activeFilter === "groups" && c.type !== "group") return;
-        if (activeFilter === "direct" && c.type !== "direct") return;
-        if (searchVal && !c.title.toLowerCase().includes(searchVal)) return;
+        if(activeFilter === 'groups' && c.type !== 'group') return;
+        if(activeFilter === 'direct' && c.type !== 'direct') return;
+        if(search && !c.title.toLowerCase().includes(search)) return;
 
         const isCurrent = c.id === activeChatId;
         const item = document.createElement("div");
-        item.className = `flex items-center px-3.5 py-3 gap-3 cursor-pointer transition select-none ${isCurrent ? 'bg-[#2a3942]' : 'hover:bg-[#202c33]'}`;
+        item.className = "chat-item" + (isCurrent ? " active" : "");
         item.onclick = () => selectChat(c.id);
 
+        const avatarColor = c.type === 'group' ? '#264653' : '#2a9d8f';
+
         item.innerHTML = `
-          <div class="relative shrink-0">
-            <img src="${c.avatar}" class="w-12 h-12 rounded-full bg-[#111b21] object-cover" />
-            ${c.type === 'direct' ? '<span class="w-2.5 h-2.5 bg-[#00a884] rounded-full absolute bottom-0 right-0 border-2 border-[#111b21]"></span>' : ''}
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between mb-1">
-              <h4 class="text-sm font-medium text-[#e9edef] truncate">${c.title}</h4>
-              <span class="text-[10px] text-[#8696a0]">${c.time || ''}</span>
+          <div class="avatar" style="background:${avatarColor}; font-size:12px;">${getInitials(c.title)}</div>
+          <div class="chat-info">
+            <div class="chat-row-top">
+              <span class="chat-title">${c.title}</span>
+              <span class="chat-time">${c.time || ''}</span>
             </div>
-            <div class="flex items-center justify-between">
-              <p class="text-xs text-[#8696a0] truncate pr-2">${c.lastMsg || 'No messages'}</p>
-              ${c.unread > 0 ? `<span class="bg-[#00a884] text-[#111b21] text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">${c.unread}</span>` : ''}
+            <div class="chat-row-btm">
+              <span class="chat-preview">${c.lastMsg || 'Tap to message'}</span>
+              ${c.unread > 0 ? `<span class="badge-unread">${c.unread}</span>` : ''}
             </div>
           </div>
         `;
@@ -253,306 +277,250 @@
 
     function selectChat(id) {
       activeChatId = id;
-      localStorage.setItem("mm_active_chat", id);
       const target = conversations.find(c => c.id === id) || conversations[0];
       target.unread = 0;
-      saveConversations();
+      saveData();
 
-      document.getElementById("activeChatTitle").innerText = target.title;
-      document.getElementById("activeChatSubtitle").innerText = target.type === 'group' ? 'Group Frequency • Offline' : 'Direct Peer Node • Ready';
-      document.getElementById("activeChatAvatar").src = target.avatar;
+      document.getElementById("activeTitle").innerText = target.title;
+      document.getElementById("activeSubtitle").innerText = target.type === 'group' ? 'Tactical Group • Offline' : 'Direct Node • Ready';
+      document.getElementById("activeAvatar").innerText = getInitials(target.title);
 
-      document.getElementById("sidebarPanel").classList.add("hidden", "md:flex");
-      document.getElementById("conversationPanel").classList.remove("hidden");
-      document.getElementById("conversationPanel").classList.add("flex");
+      // Mobile slide toggle
+      document.getElementById("sidebarPane").classList.add("mobile-hide");
+      document.getElementById("chatPane").classList.remove("mobile-hide");
 
-      renderChatSidebar();
+      renderChats();
       renderMessages();
     }
 
-    function backToSidebar() {
-      document.getElementById("sidebarPanel").classList.remove("hidden");
-      document.getElementById("conversationPanel").classList.add("hidden");
+    function goBackToSidebar() {
+      document.getElementById("sidebarPane").classList.remove("mobile-hide");
+      document.getElementById("chatPane").classList.add("mobile-hide");
     }
 
+    // --- MESSAGES RENDERING ---
     function renderMessages() {
       const box = document.getElementById("messagesContainer");
       box.innerHTML = "";
-      const currentList = messages[activeChatId] || [];
+      const list = messages[activeChatId] || [];
 
-      currentList.forEach(m => {
-        const row = document.createElement("div");
-        row.className = `flex ${m.isSelf ? 'justify-end' : 'justify-start'}`;
+      list.forEach(m => {
+        const wrap = document.createElement("div");
+        wrap.className = "msg-wrapper " + (m.isSelf ? "self" : "peer");
 
-        let content = `<span class="leading-relaxed">${m.text}</span>`;
-        if (m.type === "voice") {
-          content = `
-            <div class="flex items-center gap-2.5 py-1">
-              <button onclick="new Audio('${m.text}').play()" class="w-8 h-8 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-play text-xs"></i>
-              </button>
-              <div class="flex items-center gap-0.5 h-4">
-                <span class="w-1 h-3 bg-[#8696a0] rounded"></span>
-                <span class="w-1 h-4 bg-[#00a884] rounded"></span>
-                <span class="w-1 h-2 bg-[#8696a0] rounded"></span>
-                <span class="w-1 h-5 bg-[#00a884] rounded"></span>
-                <span class="w-1 h-3 bg-[#8696a0] rounded"></span>
-              </div>
-              <span class="text-[10px] text-[#8696a0] font-mono">PTT Voice</span>
-            </div>`;
+        let body = `<span>${m.text}</span>`;
+        if (m.type === 'voice') {
+          body = `<div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="new Audio('${m.text}').play()" style="border:none; background:var(--teal-accent); color:#111; width:28px; height:28px; border-radius:50%; cursor:pointer;">▶</button>
+            <span style="font-size:12px; font-family:monospace;">Voice Note</span>
+          </div>`;
         }
 
-        row.innerHTML = `
-          <div class="${m.isSelf ? 'bubble-out' : 'bubble-in'} px-3 py-1.5 max-w-[85%] md:max-w-[65%] text-xs text-[#e9edef] shadow relative">
-            ${!m.isSelf ? `<div class="text-[10px] font-bold text-[#00a884] mb-0.5">${m.sender}</div>` : ''}
-            <div>${content}</div>
-            <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-[#8696a0]">
+        wrap.innerHTML = `
+          <div class="bubble ${m.isSelf ? 'self' : 'peer'}">
+            ${!m.isSelf ? `<div class="bubble-sender">${m.sender}</div>` : ''}
+            ${body}
+            <div class="bubble-meta">
               <span>${m.time}</span>
-              ${m.isSelf ? '<i class="fa-solid fa-check-double text-[#53bdeb] text-[10px]"></i>' : ''}
+              ${m.isSelf ? `
+                <svg style="width:14px; height:14px; fill:var(--blue-tick);" viewBox="0 0 24 24">
+                  <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/>
+                </svg>
+              ` : ''}
             </div>
           </div>
         `;
-        box.appendChild(row);
+        box.appendChild(wrap);
       });
       box.scrollTop = box.scrollHeight;
     }
 
-    function handleSendText(e) {
-      e.preventDefault();
+    // --- DISPATCH PACKET ---
+    function sendCurrentMessage() {
       const input = document.getElementById("textInput");
-      const val = input.value.trim();
-      if (!val) return;
+      const text = input.value.trim();
+      if (!text) return;
 
-      dispatchMeshPacket(val, "text");
+      dispatch(text, 'text');
       input.value = "";
-      toggleSendButton("");
+      handleTyping("");
     }
 
-    function dispatchMeshPacket(payload, type = "text") {
+    function dispatch(content, type = 'text') {
       const now = new Date();
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      const msgObj = {
-        sender: myUserName,
-        text: payload,
-        time: timeStr,
-        isSelf: true,
-        type: type
-      };
-
+      const msg = { sender: myName, text: content, time: timeStr, isSelf: true, type: type };
       if (!messages[activeChatId]) messages[activeChatId] = [];
-      messages[activeChatId].push(msgObj);
-      saveMessages();
+      messages[activeChatId].push(msg);
 
       const target = conversations.find(c => c.id === activeChatId);
-      if (target) {
-        target.lastMsg = type === 'voice' ? '🎙️ Voice note' : payload;
+      if(target) {
+        target.lastMsg = type === 'voice' ? '🎙️ Voice note' : content;
         target.time = timeStr;
-        saveConversations();
       }
 
+      saveData();
       renderMessages();
-      renderChatSidebar();
+      renderChats();
 
       if (meshSocket && meshSocket.readyState === WebSocket.OPEN) {
         meshSocket.send(JSON.stringify({
           chatId: activeChatId,
-          senderName: myUserName,
-          srcNodeId: myNodeId,
-          payload: payload,
-          type: type,
-          timestamp: Date.now()
+          srcNodeId: myId,
+          sender: myName,
+          payload: content,
+          type: type
         }));
       }
     }
 
-    function handleIncomingPacket(data) {
-      try {
-        const pkt = JSON.parse(data);
-        if (pkt.srcNodeId === myNodeId) return;
-
-        const targetChatId = pkt.chatId || "global-mesh";
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        const incomingMsg = {
-          sender: pkt.senderName || "Peer",
-          text: pkt.payload,
-          time: timeStr,
-          isSelf: false,
-          type: pkt.type || "text"
-        };
-
-        if (!messages[targetChatId]) messages[targetChatId] = [];
-        messages[targetChatId].push(incomingMsg);
-        saveMessages();
-
-        const conv = conversations.find(c => c.id === targetChatId);
-        if (conv) {
-          conv.lastMsg = pkt.type === 'voice' ? '🎙️ Voice note' : pkt.payload;
-          conv.time = timeStr;
-          if (activeChatId !== targetChatId) conv.unread = (conv.unread || 0) + 1;
-          saveConversations();
-        }
-
-        if (activeChatId === targetChatId) {
-          renderMessages();
-        }
-        renderChatSidebar();
-      } catch (e) {
-        console.error("Packet error", e);
-      }
-    }
-
-    function connectRelay(ip) {
-      if (meshSocket) meshSocket.close();
-      const badge = document.getElementById("connBadge");
-      badge.innerText = "LINKING...";
-      badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-800 px-1 rounded font-mono";
+    // --- OFFLINE SOCKET RELAY ---
+    function connectSocket(ip) {
+      if(meshSocket) meshSocket.close();
+      const tag = document.getElementById("connTag");
+      tag.innerText = "LINKING...";
+      tag.style.color = "#e9c46a";
 
       try {
         meshSocket = new WebSocket(`ws://${ip}:8080`);
         meshSocket.onopen = () => {
-          badge.innerText = "LINKED";
-          badge.className = "text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1 rounded font-mono";
-          localStorage.setItem("last_ip", ip);
+          tag.innerText = "LINKED";
+          tag.style.color = "#00a884";
+          localStorage.setItem("mm_last_ip", ip);
         };
-        meshSocket.onmessage = (e) => handleIncomingPacket(e.data);
+        meshSocket.onmessage = (e) => {
+          try {
+            const pkt = JSON.parse(e.data);
+            if(pkt.srcNodeId === myId) return;
+
+            const tChat = pkt.chatId || "global-mesh";
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (!messages[tChat]) messages[tChat] = [];
+            messages[tChat].push({ sender: pkt.sender, text: pkt.payload, time: timeStr, isSelf: false, type: pkt.type });
+
+            const c = conversations.find(x => x.id === tChat);
+            if(c) {
+              c.lastMsg = pkt.type === 'voice' ? '🎙️ Voice note' : pkt.payload;
+              c.time = timeStr;
+              if (activeChatId !== tChat) c.unread = (c.unread || 0) + 1;
+            }
+
+            saveData();
+            if(activeChatId === tChat) renderMessages();
+            renderChats();
+          } catch(err){}
+        };
         meshSocket.onclose = () => {
-          badge.innerText = "OFFLINE";
-          badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-800 px-1 rounded font-mono";
+          tag.innerText = "OFFLINE";
+          tag.style.color = "#e76f51";
         };
-      } catch (err) {
-        badge.innerText = "STANDALONE";
+      } catch(e) {
+        tag.innerText = "STANDALONE";
       }
     }
 
-    function promptConnectRelay() {
-      const last = localStorage.getItem("last_ip") || "192.168.43.1";
-      const ip = prompt("Enter Relay Node IP Address (e.g. laptop's Wi-Fi IP):", last);
-      if (ip) connectRelay(ip);
+    function promptRelayIP() {
+      const def = localStorage.getItem("mm_last_ip") || "192.168.43.1";
+      const ip = prompt("Enter Relay Device IP Address:", def);
+      if(ip) connectSocket(ip);
     }
 
+    // --- PTT / VOICE ---
     let mediaRecorder = null;
-    let audioChunks = [];
+    let chunks = [];
 
-    async function startVoiceNote() {
+    async function startPTT() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+        chunks = [];
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
         mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const blob = new Blob(chunks, { type: 'audio/webm' });
           const reader = new FileReader();
           reader.readAsDataURL(blob);
-          reader.onloadend = () => dispatchMeshPacket(reader.result, "voice");
+          reader.onloadend = () => dispatch(reader.result, 'voice');
         };
         mediaRecorder.start();
-        document.getElementById("actionIcon").className = "fa-solid fa-circle-dot text-red-500 animate-pulse";
-      } catch (e) {
-        alert("Microphone permission required for voice notes.");
+        document.getElementById("actionBtn").style.background = "#e63946";
+      } catch(e) {
+        alert("Audio permission required.");
       }
     }
 
-    function stopVoiceNote() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    function stopPTT() {
+      if(mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
-        document.getElementById("actionIcon").className = "fa-solid fa-microphone text-base";
+        document.getElementById("actionBtn").style.background = "var(--teal-accent)";
       }
     }
 
-    function toggleSendButton(val) {
+    function handleTyping(val) {
+      const btn = document.getElementById("actionBtn");
       const icon = document.getElementById("actionIcon");
-      const btn = document.getElementById("pttRecordBtn");
-      if (val.trim().length > 0) {
-        icon.className = "fa-solid fa-paper-plane text-sm";
-        btn.onclick = () => document.getElementById("msgForm").requestSubmit();
+      if(val.trim().length > 0) {
+        // Send Airplane SVG
+        icon.innerHTML = `<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>`;
+        btn.onclick = sendCurrentMessage;
         btn.onmousedown = null;
         btn.onmouseup = null;
       } else {
-        icon.className = "fa-solid fa-microphone text-base";
+        // Mic SVG
+        icon.innerHTML = `<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>`;
         btn.onclick = null;
-        btn.onmousedown = startVoiceNote;
-        btn.onmouseup = stopVoiceNote;
+        btn.onmousedown = startPTT;
+        btn.onmouseup = stopPTT;
       }
     }
 
-    function sendQuickTacticalPing() {
-      dispatchMeshPacket("⚡ Tactical Ping: Radio check confirmed.", "text");
-    }
-
-    function openProfileModal() { document.getElementById("profileModal").classList.remove("hidden"); }
-    function closeProfileModal() { document.getElementById("profileModal").classList.add("hidden"); }
-    function randomizeAvatar() {
-      myAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=" + Math.random();
-      document.getElementById("modalAvatarPreview").src = myAvatar;
-    }
-    function saveUserProfile() {
-      const val = document.getElementById("nameInputField").value.trim();
-      if (val) {
-        myUserName = val;
-        localStorage.setItem("mm_username", myUserName);
-        localStorage.setItem("mm_avatar", myAvatar);
-        document.getElementById("myCallSignLabel").innerText = myUserName;
-        document.getElementById("myAvatarImg").src = myAvatar;
+    // --- MODALS ---
+    function openProfile() { document.getElementById("profileModal").classList.remove("hidden"); }
+    function saveProfile() {
+      const val = document.getElementById("profileNameInput").value.trim();
+      if(val) {
+        myName = val;
+        localStorage.setItem("mm_user_name", myName);
+        document.getElementById("selfName").innerText = myName;
+        document.getElementById("selfAvatar").innerText = getInitials(myName);
       }
-      closeProfileModal();
+      document.getElementById("profileModal").classList.add("hidden");
     }
 
-    function openNewChatModal() { document.getElementById("newChatModal").classList.remove("hidden"); }
-    function closeNewChatModal() { document.getElementById("newChatModal").classList.add("hidden"); }
-    function createNewConversation() {
-      const title = document.getElementById("newChatTitle").value.trim();
+    function openNewChat() { document.getElementById("newChatModal").classList.remove("hidden"); }
+    function saveNewChat() {
+      const name = document.getElementById("newChatName").value.trim();
       const type = document.getElementById("newChatType").value;
-      if (!title) return;
+      if(!name) return;
 
       const newId = "chat-" + Date.now();
-      const newConv = {
-        id: newId,
-        title: title,
-        type: type,
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${title}`,
-        lastMsg: "New thread started",
-        time: "Now",
-        unread: 0
-      };
-      conversations.unshift(newConv);
+      conversations.unshift({ id: newId, title: name, type: type, lastMsg: "Created thread", time: "Now", unread: 0 });
       messages[newId] = [];
-      saveConversations();
-      saveMessages();
-
-      document.getElementById("newChatTitle").value = "";
-      closeNewChatModal();
+      saveData();
+      document.getElementById("newChatName").value = "";
+      document.getElementById("newChatModal").classList.add("hidden");
       selectChat(newId);
     }
 
-    function clearCurrentChat() {
-      if (confirm("Clear all messages in this conversation?")) {
-        messages[activeChatId] = [];
-        saveMessages();
-        renderMessages();
-      }
-    }
-
-    function initiateCall(type) {
-      alert(`Starting direct ${type.toUpperCase()} call signal to active peer on offline radio frequency...`);
-    }
-
-    function setFilter(f) {
+    function setFilter(f, btn) {
       activeFilter = f;
-      document.querySelectorAll(".filter-chip").forEach(el => {
-        el.className = "filter-chip text-[11px] px-3 py-1 rounded-full bg-[#202c33] text-[#8696a0] font-medium whitespace-nowrap";
-      });
-      event.target.className = "filter-chip text-[11px] px-3 py-1 rounded-full bg-[#00a884]/20 text-[#00a884] font-medium border border-[#00a884]/40 whitespace-nowrap";
-      renderChatSidebar();
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      renderChats();
     }
 
-    function filterChatList() { renderChatSidebar(); }
-    function saveConversations() { localStorage.setItem("mm_conversations", JSON.stringify(conversations)); }
-    function saveMessages() { localStorage.setItem("mm_messages", JSON.stringify(messages)); }
+    function triggerCall(type) {
+      alert(`[Offline P2P Engine] Calling signal initiated via local frequency (${type}). Target node must be connected.`);
+    }
 
-    window.onload = initApp;
+    function saveData() {
+      localStorage.setItem("mm_chat_threads", JSON.stringify(conversations));
+      localStorage.setItem("mm_chat_msgs", JSON.stringify(messages));
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
