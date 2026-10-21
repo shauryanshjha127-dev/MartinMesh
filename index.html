@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>MartinMesh Offline WhatsApp</title>
+  <title>MartinMesh</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -20,25 +20,26 @@
       --text-muted: #8696a0;
       --border-color: #222e35;
       --blue-tick: #53bdeb;
+      --status-red: #e76f51;
+      --status-yellow: #e9c46a;
     }
     body, html { width: 100%; height: 100%; background: var(--bg-dark); color: var(--text-white); overflow: hidden; }
     .app-root { display: flex; width: 100vw; height: 100vh; position: relative; }
 
-    /* SVGs and Icons */
     .icon { width: 20px; height: 20px; fill: currentColor; display: inline-block; vertical-align: middle; }
     .icon-sm { width: 16px; height: 16px; fill: currentColor; }
 
     /* SIDEBAR */
     .sidebar { width: 100%; max-width: 420px; background: var(--panel-dark); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; height: 100%; z-index: 20; shrink: 0; }
-    @media (min-width: 768px) { .sidebar { width: 400px; } }
+    @media (min-width: 768px) { .sidebar { width: 380px; } }
 
     .header-bar { height: 60px; background: var(--header-dark); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); }
     .user-profile-badge { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-    .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; text-transform: uppercase; color: #fff; background: #374248; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; text-transform: uppercase; color: #fff; background: #374248; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
     .status-dot { width: 9px; height: 9px; background: var(--teal-accent); border-radius: 50%; border: 2px solid var(--header-dark); position: absolute; bottom: 0; right: 0; }
 
-    .actions-row { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
-    .btn-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: inherit; cursor: pointer; transition: 0.15s; }
+    .actions-row { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+    .btn-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: inherit; cursor: pointer; }
     .btn-icon:active { background: rgba(255,255,255,0.08); }
 
     .search-section { padding: 8px 12px; background: var(--panel-dark); border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
@@ -68,23 +69,21 @@
     .msg-wrapper.self { justify-content: flex-end; }
     .msg-wrapper.peer { justify-content: flex-start; }
 
-    .bubble { max-width: 80%; padding: 6px 9px 5px 9px; border-radius: 8px; font-size: 13.5px; line-height: 19px; word-break: break-word; box-shadow: 0 1px 0.5px rgba(0,0,0,0.2); }
+    .bubble { max-width: 78%; padding: 6px 10px 5px 10px; border-radius: 8px; font-size: 13.5px; line-height: 19px; word-break: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.25); }
     .bubble.self { background: var(--bubble-out); border-top-right-radius: 0px; }
     .bubble.peer { background: var(--bubble-in); border-top-left-radius: 0px; }
     .bubble-sender { font-size: 11px; font-weight: 700; color: var(--teal-accent); margin-bottom: 2px; }
-    .bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; color: var(--text-muted); margin-top: 2px; float: right; margin-left: 12px; }
+    .bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; color: var(--text-muted); margin-top: 2px; float: right; margin-left: 10px; }
 
-    /* FOOTER TOOLBAR */
     .input-bar { height: 60px; background: var(--header-dark); padding: 6px 12px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); }
     .msg-field { flex: 1; background: var(--input-dark); border: none; outline: none; border-radius: 8px; height: 42px; padding: 0 14px; font-size: 14px; color: var(--text-white); }
     .btn-circle { width: 42px; height: 42px; border-radius: 50%; background: var(--teal-accent); border: none; display: flex; align-items: center; justify-content: center; color: #0b141a; cursor: pointer; flex-shrink: 0; }
-    .btn-circle:active { transform: scale(0.95); }
 
-    /* MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .modal-card { width: 100%; max-width: 360px; background: var(--header-dark); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); }
-    .modal-card input, .modal-card select { width: 100%; background: var(--panel-dark); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 6px; margin: 10px 0 16px 0; outline: none; font-size: 14px; }
-    .modal-card button.save-btn { width: 100%; background: var(--teal-accent); color: #0b141a; font-weight: bold; border: none; padding: 12px; border-radius: 6px; cursor: pointer; }
+    /* MODALS */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-card { width: 100%; max-width: 360px; background: var(--header-dark); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .modal-card input, .modal-card select { width: 100%; background: var(--panel-dark); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 6px; margin: 8px 0 16px 0; outline: none; font-size: 14px; }
+    .save-btn { width: 100%; background: var(--teal-accent); color: #0b141a; font-weight: bold; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; }
 
     .hidden { display: none !important; }
     @media (max-width: 767px) {
@@ -107,19 +106,19 @@
           <div>
             <div style="font-size:14px; font-weight:bold; color:var(--text-white); display:flex; align-items:center; gap:6px;">
               MartinMesh
-              <span id="connTag" style="font-size:9px; font-weight:normal; background:#1b382b; color:var(--teal-accent); padding:1px 5px; border-radius:4px; font-family:monospace;">STANDALONE</span>
+              <span id="connTag" style="font-size:9px; font-weight:bold; background:rgba(0,168,132,0.15); color:var(--status-yellow); padding:2px 6px; border-radius:4px; font-family:monospace;">STANDALONE</span>
             </div>
             <div id="selfName" style="font-size:11px; color:var(--text-muted);">Set Profile</div>
           </div>
         </div>
 
         <div class="actions-row">
-          <button class="btn-icon" onclick="promptRelayIP()" title="Connect IP">
+          <button class="btn-icon" onclick="openIPModal()" title="Link IP">
             <!-- Wi-Fi SVG -->
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0 0 12 4zm0 4c3.34 0 6.39 1.25 8.7 3.32L12 19.97 3.3 11.32A12.82 12.82 0 0 1 12 8z"/></svg>
           </button>
           <button class="btn-icon" onclick="openNewChat()" title="New Chat">
-            <!-- Message Add SVG -->
+            <!-- Add SVG -->
             <svg class="icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 9h-4v4h-2v-4H7V9h4V5h2v4h4v2z"/></svg>
           </button>
         </div>
@@ -128,21 +127,20 @@
       <div class="search-section">
         <div class="search-bar">
           <svg class="icon-sm" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-          <input type="text" id="searchInput" placeholder="Search or start new chat" oninput="renderChats()" />
+          <input type="text" id="searchInput" placeholder="Search chats..." oninput="renderChats()" />
         </div>
         <div class="chips-row">
           <button class="chip active" onclick="setFilter('all', this)">All</button>
           <button class="chip" onclick="setFilter('groups', this)">Groups</button>
-          <button class="chip" onclick="setFilter('direct', this)">Direct Nodes</button>
+          <button class="chip" onclick="setFilter('direct', this)">Direct</button>
         </div>
       </div>
 
       <div id="chatsContainer" class="chat-list"></div>
     </aside>
 
-    <!-- MAIN CHAT PANEL -->
+    <!-- CONVERSATION PANEL -->
     <main id="chatPane" class="conversation-panel mobile-hide">
-      <!-- Conversation Header -->
       <div class="header-bar" style="border-left: 1px solid var(--border-color);">
         <div style="display:flex; align-items:center; gap:10px;">
           <button class="btn-icon" style="margin-left:-8px;" onclick="goBackToSidebar()">
@@ -157,24 +155,21 @@
         </div>
 
         <div class="actions-row">
-          <button class="btn-icon" onclick="triggerCall('Video')" title="Video Call">
+          <button class="btn-icon" onclick="triggerCall('Video')">
             <svg class="icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
           </button>
-          <button class="btn-icon" onclick="triggerCall('Voice')" title="Audio Call">
+          <button class="btn-icon" onclick="triggerCall('Voice')">
             <svg class="icon" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.51c.24-.24.32-.59.24-.92C9.12 6.66 8.93 5.47 8.93 4.24 8.93 3.56 8.37 3 7.69 3H4.27C3.59 3 3 3.56 3 4.24c0 9.39 7.61 17 17 17 .68 0 1.25-.57 1.25-1.25v-3.41c0-.68-.57-1.2-1.24-1.2z"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- Messages View -->
       <div id="messagesContainer" class="messages-area"></div>
 
-      <!-- Input Bar -->
       <footer class="input-bar">
         <input type="text" id="textInput" class="msg-field" placeholder="Type a message" autocomplete="off" oninput="handleTyping(this.value)" onkeydown="if(event.key==='Enter') sendCurrentMessage()" />
         
         <button id="actionBtn" class="btn-circle" onmousedown="startPTT()" onmouseup="stopPTT()" ontouchstart="startPTT()" ontouchend="stopPTT()">
-          <!-- Default Mic SVG -->
           <svg id="actionIcon" class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
         </button>
       </footer>
@@ -182,29 +177,40 @@
 
   </div>
 
-  <!-- MODALS -->
+  <!-- ON-SCREEN IP MODAL (Bypasses Native Android Dialog Blocks) -->
+  <div id="ipModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 style="margin-bottom:6px; font-size:16px;">Link Laptop Relay</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Enter your Laptop's Local IP address:</p>
+      <input type="text" id="targetIpInput" placeholder="e.g. 192.168.1.7" />
+      <button class="save-btn" onclick="confirmIP()">Connect Node</button>
+      <button style="width:100%; background:transparent; border:none; color:var(--text-muted); margin-top:10px; cursor:pointer;" onclick="closeIPModal()">Cancel</button>
+    </div>
+  </div>
+
   <div id="profileModal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3 style="margin-bottom:12px; font-size:16px;">Tactical Call-Sign</h3>
-      <input type="text" id="profileNameInput" placeholder="Enter your identity name..." />
+      <h3 style="margin-bottom:8px; font-size:16px;">Identity Name</h3>
+      <input type="text" id="profileNameInput" placeholder="Enter username..." />
       <button class="save-btn" onclick="saveProfile()">Save Identity</button>
+      <button style="width:100%; background:transparent; border:none; color:var(--text-muted); margin-top:10px; cursor:pointer;" onclick="document.getElementById('profileModal').classList.add('hidden')">Cancel</button>
     </div>
   </div>
 
   <div id="newChatModal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3 style="margin-bottom:12px; font-size:16px;">Start Conversation</h3>
-      <input type="text" id="newChatName" placeholder="Node or Group Name..." />
+      <h3 style="margin-bottom:8px; font-size:16px;">Create Chat</h3>
+      <input type="text" id="newChatName" placeholder="Node or Channel Name..." />
       <select id="newChatType">
-        <option value="direct">Direct 1-to-1 Node</option>
-        <option value="group">Tactical Group Channel</option>
+        <option value="direct">Direct Node (1-to-1)</option>
+        <option value="group">Group Channel</option>
       </select>
       <button class="save-btn" onclick="saveNewChat()">Add Chat</button>
+      <button style="width:100%; background:transparent; border:none; color:var(--text-muted); margin-top:10px; cursor:pointer;" onclick="document.getElementById('newChatModal').classList.add('hidden')">Cancel</button>
     </div>
   </div>
 
   <script>
-    // --- STATE CONFIG ---
     let myName = localStorage.getItem("mm_user_name") || "Node-" + Math.floor(100 + Math.random()*900);
     const myId = "NODE-" + Math.floor(1000 + Math.random()*9000);
     let activeChatId = "global-mesh";
@@ -213,13 +219,12 @@
 
     let conversations = JSON.parse(localStorage.getItem("mm_chat_threads")) || [
       { id: "global-mesh", title: "#Global-Mesh", type: "group", lastMsg: "Zero-Internet Radio Active", time: "Now", unread: 0 },
-      { id: "device-alpha", title: "Device Alpha", type: "direct", lastMsg: "Offline link standing by", time: "11:20", unread: 0 },
-      { id: "device-bravo", title: "Device Bravo", type: "direct", lastMsg: "Node online", time: "Yesterday", unread: 0 }
+      { id: "device-alpha", title: "Device Alpha", type: "direct", lastMsg: "Link standing by", time: "11:20", unread: 0 }
     ];
 
     let messages = JSON.parse(localStorage.getItem("mm_chat_msgs")) || {
       "global-mesh": [
-        { sender: "System", text: "MartinMesh authentic offline layout ready. No servers needed.", time: "12:00", isSelf: false, type: "text" }
+        { sender: "System", text: "MartinMesh initialized. Direct offline channel open.", time: "12:00", isSelf: false, type: "text" }
       ]
     };
 
@@ -234,13 +239,15 @@
       renderChats();
       selectChat(activeChatId);
 
-      // Desktop auto-relay connect
-      if (window.navigator.userAgent.indexOf("Windows") !== -1 || window.location.protocol === "file:") {
-        setTimeout(() => connectSocket("localhost"), 500);
+      const isDesktop = window.navigator.userAgent.indexOf("Windows") !== -1 || window.location.protocol === "file:";
+      if (isDesktop) {
+        setTimeout(() => connectSocket("localhost"), 400);
+      } else {
+        const lastIp = localStorage.getItem("mm_last_ip") || "192.168.1.7";
+        setTimeout(() => connectSocket(lastIp), 600);
       }
     }
 
-    // --- SIDEBAR RENDERING ---
     function renderChats() {
       const container = document.getElementById("chatsContainer");
       container.innerHTML = "";
@@ -285,7 +292,6 @@
       document.getElementById("activeSubtitle").innerText = target.type === 'group' ? 'Tactical Group • Offline' : 'Direct Node • Ready';
       document.getElementById("activeAvatar").innerText = getInitials(target.title);
 
-      // Mobile slide toggle
       document.getElementById("sidebarPane").classList.add("mobile-hide");
       document.getElementById("chatPane").classList.remove("mobile-hide");
 
@@ -298,7 +304,6 @@
       document.getElementById("chatPane").classList.add("mobile-hide");
     }
 
-    // --- MESSAGES RENDERING ---
     function renderMessages() {
       const box = document.getElementById("messagesContainer");
       box.innerHTML = "";
@@ -335,7 +340,6 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    // --- DISPATCH PACKET ---
     function sendCurrentMessage() {
       const input = document.getElementById("textInput");
       const text = input.value.trim();
@@ -375,18 +379,19 @@
       }
     }
 
-    // --- OFFLINE SOCKET RELAY ---
     function connectSocket(ip) {
-      if(meshSocket) meshSocket.close();
+      if(meshSocket) {
+        try { meshSocket.close(); } catch(e){}
+      }
       const tag = document.getElementById("connTag");
       tag.innerText = "LINKING...";
-      tag.style.color = "#e9c46a";
+      tag.style.color = "var(--status-yellow)";
 
       try {
         meshSocket = new WebSocket(`ws://${ip}:8080`);
         meshSocket.onopen = () => {
           tag.innerText = "LINKED";
-          tag.style.color = "#00a884";
+          tag.style.color = "var(--teal-accent)";
           localStorage.setItem("mm_last_ip", ip);
         };
         meshSocket.onmessage = (e) => {
@@ -415,20 +420,32 @@
         };
         meshSocket.onclose = () => {
           tag.innerText = "OFFLINE";
-          tag.style.color = "#e76f51";
+          tag.style.color = "var(--status-red)";
         };
       } catch(e) {
         tag.innerText = "STANDALONE";
+        tag.style.color = "var(--status-yellow)";
       }
     }
 
-    function promptRelayIP() {
-      const def = localStorage.getItem("mm_last_ip") || "192.168.43.1";
-      const ip = prompt("Enter Relay Device IP Address:", def);
-      if(ip) connectSocket(ip);
+    function openIPModal() {
+      const def = localStorage.getItem("mm_last_ip") || "192.168.1.7";
+      document.getElementById("targetIpInput").value = def;
+      document.getElementById("ipModal").classList.remove("hidden");
     }
 
-    // --- PTT / VOICE ---
+    function closeIPModal() {
+      document.getElementById("ipModal").classList.add("hidden");
+    }
+
+    function confirmIP() {
+      const ip = document.getElementById("targetIpInput").value.trim();
+      if(ip) {
+        connectSocket(ip);
+      }
+      closeIPModal();
+    }
+
     let mediaRecorder = null;
     let chunks = [];
 
@@ -447,7 +464,7 @@
         mediaRecorder.start();
         document.getElementById("actionBtn").style.background = "#e63946";
       } catch(e) {
-        alert("Audio permission required.");
+        alert("Microphone permission required.");
       }
     }
 
@@ -462,13 +479,11 @@
       const btn = document.getElementById("actionBtn");
       const icon = document.getElementById("actionIcon");
       if(val.trim().length > 0) {
-        // Send Airplane SVG
         icon.innerHTML = `<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>`;
         btn.onclick = sendCurrentMessage;
         btn.onmousedown = null;
         btn.onmouseup = null;
       } else {
-        // Mic SVG
         icon.innerHTML = `<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>`;
         btn.onclick = null;
         btn.onmousedown = startPTT;
@@ -476,7 +491,6 @@
       }
     }
 
-    // --- MODALS ---
     function openProfile() { document.getElementById("profileModal").classList.remove("hidden"); }
     function saveProfile() {
       const val = document.getElementById("profileNameInput").value.trim();
@@ -496,7 +510,7 @@
       if(!name) return;
 
       const newId = "chat-" + Date.now();
-      conversations.unshift({ id: newId, title: name, type: type, lastMsg: "Created thread", time: "Now", unread: 0 });
+      conversations.unshift({ id: newId, title: name, type: type, lastMsg: "Created channel", time: "Now", unread: 0 });
       messages[newId] = [];
       saveData();
       document.getElementById("newChatName").value = "";
@@ -512,7 +526,7 @@
     }
 
     function triggerCall(type) {
-      alert(`[Offline P2P Engine] Calling signal initiated via local frequency (${type}). Target node must be connected.`);
+      alert(`[Offline P2P Radio] Signal sent via local frequency (${type}). Target node must be connected.`);
     }
 
     function saveData() {
